@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* Enable class-based dark mode */
+@variant dark (&:where(.dark, .dark *));
+
 /* Custom theme variables */
 :root {
   --color-primary: #2563eb;
