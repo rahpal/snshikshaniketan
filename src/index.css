@@ -1,0 +1,42 @@
+@import "tailwindcss";
+
+/* Custom theme variables */
+:root {
+  --color-primary: #2563eb;
+  --color-secondary: #f97316;
+  --color-accent: #22c55e;
+}
+
+/* Dark mode class-based switching */
+.dark {
+  --color-bg: #0f172a;
+  --color-surface: #1e293b;
+  --color-text: #f1f5f9;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Base body styles */
+body {
+  @apply bg-white dark:bg-slate-900 text-slate-900 dark:text-slate-100 transition-colors duration-300;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-slate-100 dark:bg-slate-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 dark:bg-slate-600 rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-slate-400 dark:bg-slate-500;
+}
