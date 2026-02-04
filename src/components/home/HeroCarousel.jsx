@@ -3,6 +3,7 @@ import { Autoplay, Pagination, Navigation, EffectFade } from 'swiper/modules';
 import { ChevronRight } from 'lucide-react';
 import Button from '../ui/Button';
 import { heroSlides } from '../../data/siteData';
+import { useTranslation } from '../../hooks/useTranslation';
 
 import 'swiper/css';
 import 'swiper/css/pagination';
@@ -10,6 +11,8 @@ import 'swiper/css/navigation';
 import 'swiper/css/effect-fade';
 
 export default function HeroCarousel() {
+  const { getText, t } = useTranslation();
+
   return (
     <section className="relative h-[600px] md:h-[700px]">
       <Swiper
@@ -43,21 +46,21 @@ export default function HeroCarousel() {
               <div className="relative h-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex items-center">
                 <div className="max-w-2xl">
                   <span className="inline-block px-4 py-1 bg-orange-500 text-white text-sm font-medium rounded-full mb-4">
-                    {slide.subtitle}
+                    {getText(slide.subtitle)}
                   </span>
                   <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-white mb-6 leading-tight">
-                    {slide.title}
+                    {getText(slide.title)}
                   </h1>
                   <p className="text-lg md:text-xl text-slate-200 mb-8">
-                    {slide.description}
+                    {getText(slide.description)}
                   </p>
                   <div className="flex flex-wrap gap-4">
                     <Button to="/admissions" variant="secondary" size="lg">
-                      Apply Now
+                      {t('common.applyNow')}
                       <ChevronRight className="w-5 h-5 ml-2" />
                     </Button>
                     <Button to="/about" variant="outline" size="lg" className="border-white text-white hover:bg-white hover:text-slate-900">
-                      Learn More
+                      {t('common.learnMore')}
                     </Button>
                   </div>
                 </div>

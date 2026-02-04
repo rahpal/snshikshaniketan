@@ -1,8 +1,10 @@
 import { useState } from 'react';
 import { Send, CheckCircle } from 'lucide-react';
 import Button from '../ui/Button';
+import { useTranslation } from '../../hooks/useTranslation';
 
 export default function ContactForm() {
+  const { t } = useTranslation();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -19,7 +21,6 @@ export default function ContactForm() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    // In a real app, this would send the data to a server
     console.log('Form submitted:', formData);
     setSubmitted(true);
     setTimeout(() => {
@@ -33,10 +34,10 @@ export default function ContactForm() {
       <div className="text-center py-12">
         <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
         <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-2">
-          Thank You!
+          {t('common.thankYou')}
         </h3>
         <p className="text-slate-600 dark:text-slate-400">
-          We've received your message and will get back to you soon.
+          {t('forms.messageReceived')}
         </p>
       </div>
     );
@@ -47,7 +48,7 @@ export default function ContactForm() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label htmlFor="name" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-            Full Name *
+            {t('forms.fullName')} *
           </label>
           <input
             type="text"
@@ -57,12 +58,12 @@ export default function ContactForm() {
             onChange={handleChange}
             required
             className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            placeholder="Your name"
+            placeholder={t('forms.yourName')}
           />
         </div>
         <div>
           <label htmlFor="email" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-            Email Address *
+            {t('forms.emailAddress')} *
           </label>
           <input
             type="email"
@@ -72,7 +73,7 @@ export default function ContactForm() {
             onChange={handleChange}
             required
             className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            placeholder="your@email.com"
+            placeholder={t('forms.yourEmail')}
           />
         </div>
       </div>
@@ -80,7 +81,7 @@ export default function ContactForm() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div>
           <label htmlFor="phone" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-            Phone Number
+            {t('forms.phoneNumber')}
           </label>
           <input
             type="tel"
@@ -94,7 +95,7 @@ export default function ContactForm() {
         </div>
         <div>
           <label htmlFor="subject" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-            Subject *
+            {t('forms.subject')} *
           </label>
           <select
             id="subject"
@@ -104,19 +105,19 @@ export default function ContactForm() {
             required
             className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
           >
-            <option value="">Select a subject</option>
-            <option value="admission">Admission Inquiry</option>
-            <option value="fees">Fee Information</option>
-            <option value="visit">Schedule a Visit</option>
-            <option value="feedback">Feedback</option>
-            <option value="other">Other</option>
+            <option value="">{t('forms.selectSubject')}</option>
+            <option value="admission">{t('forms.admissionInquiry')}</option>
+            <option value="fees">{t('forms.feeInformation')}</option>
+            <option value="visit">{t('forms.scheduleVisit')}</option>
+            <option value="feedback">{t('forms.feedback')}</option>
+            <option value="other">{t('forms.other')}</option>
           </select>
         </div>
       </div>
 
       <div>
         <label htmlFor="message" className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
-          Message *
+          {t('forms.message')} *
         </label>
         <textarea
           id="message"
@@ -126,12 +127,12 @@ export default function ContactForm() {
           required
           rows={5}
           className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"
-          placeholder="How can we help you?"
+          placeholder={t('forms.howCanWeHelp')}
         />
       </div>
 
       <Button type="submit" variant="primary" size="lg" className="w-full md:w-auto">
-        Send Message
+        {t('common.sendMessage')}
         <Send className="w-5 h-5 ml-2" />
       </Button>
     </form>

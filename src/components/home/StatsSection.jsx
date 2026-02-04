@@ -1,6 +1,9 @@
 import { schoolStats } from '../../data/siteData';
+import { useTranslation } from '../../hooks/useTranslation';
 
 export default function StatsSection() {
+  const { getText } = useTranslation();
+
   return (
     <section className="py-12 bg-blue-600 dark:bg-blue-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -14,7 +17,7 @@ export default function StatsSection() {
                 {stat.value}
               </div>
               <div className="text-blue-100 text-sm md:text-base">
-                {stat.label}
+                {getText(stat.label)}
               </div>
             </div>
           ))}

@@ -2,8 +2,10 @@ import { ClipboardList, FileText, Users, CheckCircle } from 'lucide-react';
 import Card, { CardBody } from '../components/ui/Card';
 import AdmissionInquiryForm from '../components/forms/AdmissionInquiryForm';
 import { admissionInfo } from '../data/siteData';
+import { useTranslation } from '../hooks/useTranslation';
 
 export default function Admissions() {
+  const { getText, t } = useTranslation();
   const stepIcons = [ClipboardList, FileText, Users, CheckCircle];
 
   return (
@@ -12,10 +14,10 @@ export default function Admissions() {
       <section className="bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-700 dark:to-blue-900 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            Admissions
+            {t('admissions.pageTitle')}
           </h1>
           <p className="text-lg text-blue-100 max-w-2xl mx-auto">
-            Begin your child's journey with us. Learn about our admission process and requirements.
+            {t('admissions.pageSubtitle')}
           </p>
         </div>
       </section>
@@ -25,13 +27,13 @@ export default function Admissions() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <span className="inline-block px-4 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-sm font-medium rounded-full mb-4">
-              How To Apply
+              {t('admissions.howToApply')}
             </span>
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-              Admission Process
+              {t('admissions.admissionProcess')}
             </h2>
             <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-              Our simple 4-step admission process makes it easy to enroll your child.
+              {t('admissions.simpleProcess')}
             </p>
           </div>
 
@@ -49,10 +51,10 @@ export default function Admissions() {
                         {step.step}
                       </div>
                       <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                        {step.title}
+                        {getText(step.title)}
                       </h3>
                       <p className="text-sm text-slate-600 dark:text-slate-400">
-                        {step.description}
+                        {getText(step.description)}
                       </p>
                     </CardBody>
                   </Card>
@@ -74,22 +76,22 @@ export default function Admissions() {
             <Card>
               <CardBody className="p-8">
                 <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
-                  Age Requirements
+                  {t('admissions.ageRequirements')}
                 </h3>
                 <p className="text-slate-600 dark:text-slate-400 mb-6">
-                  Children must meet the following age criteria as of March 31st of the admission year:
+                  {t('admissions.ageNote')}
                 </p>
                 <div className="space-y-3">
-                  {admissionInfo.ageRequirements.map((req) => (
+                  {admissionInfo.ageRequirements.map((req, index) => (
                     <div
-                      key={req.class}
+                      key={index}
                       className="flex items-center justify-between p-4 bg-slate-50 dark:bg-slate-700 rounded-lg"
                     >
                       <span className="font-medium text-slate-900 dark:text-white">
-                        {req.class}
+                        {getText(req.class)}
                       </span>
                       <span className="text-blue-600 dark:text-blue-400 font-semibold">
-                        {req.age}
+                        {getText(req.age)}
                       </span>
                     </div>
                   ))}
@@ -101,10 +103,10 @@ export default function Admissions() {
             <Card>
               <CardBody className="p-8">
                 <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-6">
-                  Required Documents
+                  {t('admissions.requiredDocuments')}
                 </h3>
                 <p className="text-slate-600 dark:text-slate-400 mb-6">
-                  Please keep the following documents ready for the admission process:
+                  {t('admissions.documentsNote')}
                 </p>
                 <ul className="space-y-3">
                   {admissionInfo.documents.map((doc, index) => (
@@ -113,7 +115,7 @@ export default function Admissions() {
                       className="flex items-center text-slate-700 dark:text-slate-300"
                     >
                       <CheckCircle className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-                      {doc}
+                      {getText(doc)}
                     </li>
                   ))}
                 </ul>
@@ -128,10 +130,10 @@ export default function Admissions() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <span className="inline-block px-4 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-sm font-medium rounded-full mb-4">
-              Fee Structure
+              {t('admissions.feeStructure')}
             </span>
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-              Transparent Fee Information
+              {t('admissions.transparentFees')}
             </h2>
           </div>
 
@@ -143,13 +145,13 @@ export default function Admissions() {
                     <thead>
                       <tr className="bg-slate-50 dark:bg-slate-800">
                         <th className="text-left px-6 py-4 font-semibold text-slate-900 dark:text-white">
-                          Fee Type
+                          {t('admissions.feeType')}
                         </th>
                         <th className="text-right px-6 py-4 font-semibold text-slate-900 dark:text-white">
-                          Amount
+                          {t('admissions.amount')}
                         </th>
                         <th className="text-left px-6 py-4 font-semibold text-slate-900 dark:text-white">
-                          Note
+                          {t('admissions.note')}
                         </th>
                       </tr>
                     </thead>
@@ -160,13 +162,13 @@ export default function Admissions() {
                           className="border-t border-slate-200 dark:border-slate-700"
                         >
                           <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
-                            {fee.item}
+                            {getText(fee.item)}
                           </td>
                           <td className="px-6 py-4 text-right font-semibold text-blue-600 dark:text-blue-400">
                             {fee.amount}
                           </td>
                           <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-                            {fee.note}
+                            {getText(fee.note)}
                           </td>
                         </tr>
                       ))}
@@ -176,7 +178,7 @@ export default function Admissions() {
               </CardBody>
             </Card>
             <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-4">
-              * Fees are subject to revision. Please contact the school office for the latest information.
+              {t('admissions.feeDisclaimer')}
             </p>
           </div>
         </div>
@@ -188,13 +190,13 @@ export default function Admissions() {
           <div className="max-w-3xl mx-auto">
             <div className="text-center mb-12">
               <span className="inline-block px-4 py-1 bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-300 text-sm font-medium rounded-full mb-4">
-                Get Started
+                {t('admissions.getStarted')}
               </span>
               <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-                Admission Inquiry
+                {t('admissions.admissionInquiry')}
               </h2>
               <p className="text-lg text-slate-600 dark:text-slate-400">
-                Fill out the form below and our admissions team will get back to you.
+                {t('admissions.inquirySubtitle')}
               </p>
             </div>
             <Card>

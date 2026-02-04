@@ -2,11 +2,14 @@ import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, GraduationCap } from 'lucide-react';
 import ThemeToggle from '../ui/ThemeToggle';
+import LanguageToggle from '../ui/LanguageToggle';
 import { navLinks, schoolInfo } from '../../data/siteData';
+import { useTranslation } from '../../hooks/useTranslation';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
+  const { getText, t } = useTranslation();
 
   const isActive = (path) => location.pathname === path;
 
@@ -21,10 +24,10 @@ export default function Navbar() {
             </div>
             <div className="hidden sm:block">
               <h1 className="text-xl font-bold text-slate-900 dark:text-white">
-                {schoolInfo.name}
+                {getText(schoolInfo.name)}
               </h1>
               <p className="text-xs text-slate-600 dark:text-slate-400">
-                Primary School
+                {t('common.primarySchool')}
               </p>
             </div>
           </Link>
@@ -41,16 +44,18 @@ export default function Navbar() {
                     : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
                 }`}
               >
-                {link.name}
+                {getText(link.name)}
               </Link>
             ))}
-            <div className="ml-4">
+            <div className="ml-4 flex items-center space-x-2">
+              <LanguageToggle />
               <ThemeToggle />
             </div>
           </div>
 
           {/* Mobile Menu Button */}
-          <div className="flex items-center space-x-4 md:hidden">
+          <div className="flex items-center space-x-2 md:hidden">
+            <LanguageToggle />
             <ThemeToggle />
             <button
               onClick={() => setIsOpen(!isOpen)}
@@ -80,7 +85,7 @@ export default function Navbar() {
                     : 'text-slate-700 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800'
                 }`}
               >
-                {link.name}
+                {getText(link.name)}
               </Link>
             ))}
           </div>

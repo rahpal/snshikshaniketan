@@ -1,6 +1,7 @@
 import { BookOpen, Shield, Trophy, Palette, Monitor, Users } from 'lucide-react';
 import Card, { CardBody } from '../ui/Card';
 import { features } from '../../data/siteData';
+import { useTranslation } from '../../hooks/useTranslation';
 
 const iconMap = {
   BookOpen,
@@ -12,19 +13,21 @@ const iconMap = {
 };
 
 export default function FeaturesSection() {
+  const { getText, t } = useTranslation();
+
   return (
     <section className="py-20 bg-slate-50 dark:bg-slate-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Section Header */}
         <div className="text-center mb-16">
           <span className="inline-block px-4 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-sm font-medium rounded-full mb-4">
-            Why Choose Us
+            {t('home.whyChooseUs')}
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-            What Makes Us Special
+            {t('home.whatMakesUsSpecial')}
           </h2>
           <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
-            We provide a comprehensive learning experience that nurtures every aspect of your child's development.
+            {t('home.featuresSubtitle')}
           </p>
         </div>
 
@@ -39,10 +42,10 @@ export default function FeaturesSection() {
                     <Icon className="w-8 h-8" />
                   </div>
                   <h3 className="text-xl font-semibold text-slate-900 dark:text-white mb-3">
-                    {feature.title}
+                    {getText(feature.title)}
                   </h3>
                   <p className="text-slate-600 dark:text-slate-400">
-                    {feature.description}
+                    {getText(feature.description)}
                   </p>
                 </CardBody>
               </Card>

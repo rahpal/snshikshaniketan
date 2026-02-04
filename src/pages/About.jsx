@@ -1,18 +1,21 @@
 import { Target, Eye, Heart, Star, Users, Award } from 'lucide-react';
 import Card, { CardBody } from '../components/ui/Card';
 import { aboutContent, schoolInfo, schoolStats } from '../data/siteData';
+import { useTranslation } from '../hooks/useTranslation';
 
 export default function About() {
+  const { getText, t } = useTranslation();
+
   return (
     <>
       {/* Page Header */}
       <section className="bg-gradient-to-r from-blue-600 to-blue-800 dark:from-blue-700 dark:to-blue-900 py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-            About Our School
+            {t('about.pageTitle')}
           </h1>
           <p className="text-lg text-blue-100 max-w-2xl mx-auto">
-            Learn about our journey, mission, and the values that guide us in shaping young minds.
+            {t('about.pageSubtitle')}
           </p>
         </div>
       </section>
@@ -23,13 +26,13 @@ export default function About() {
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
               <span className="inline-block px-4 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-sm font-medium rounded-full mb-4">
-                Our Story
+                {t('about.ourStory')}
               </span>
               <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-6">
-                A Legacy of Excellence Since {schoolInfo.established}
+                {t('about.legacyOfExcellence')} {schoolInfo.established}
               </h2>
               <p className="text-slate-600 dark:text-slate-400 whitespace-pre-line leading-relaxed">
-                {aboutContent.history}
+                {getText(aboutContent.history)}
               </p>
             </div>
             <div className="relative">
@@ -40,7 +43,7 @@ export default function About() {
               />
               <div className="absolute -bottom-6 -left-6 bg-orange-500 text-white p-6 rounded-xl shadow-lg">
                 <div className="text-4xl font-bold">{new Date().getFullYear() - schoolInfo.established}+</div>
-                <div className="text-sm">Years of Excellence</div>
+                <div className="text-sm">{t('about.yearsOfExcellence')}</div>
               </div>
             </div>
           </div>
@@ -57,10 +60,10 @@ export default function About() {
                   <div className="p-3 bg-blue-100 dark:bg-blue-900 rounded-lg mr-4">
                     <Target className="w-8 h-8 text-blue-600 dark:text-blue-400" />
                   </div>
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Our Mission</h3>
+                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{t('about.ourMission')}</h3>
                 </div>
                 <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                  {aboutContent.mission}
+                  {getText(aboutContent.mission)}
                 </p>
               </CardBody>
             </Card>
@@ -70,10 +73,10 @@ export default function About() {
                   <div className="p-3 bg-orange-100 dark:bg-orange-900 rounded-lg mr-4">
                     <Eye className="w-8 h-8 text-orange-600 dark:text-orange-400" />
                   </div>
-                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white">Our Vision</h3>
+                  <h3 className="text-2xl font-bold text-slate-900 dark:text-white">{t('about.ourVision')}</h3>
                 </div>
                 <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
-                  {aboutContent.vision}
+                  {getText(aboutContent.vision)}
                 </p>
               </CardBody>
             </Card>
@@ -86,10 +89,10 @@ export default function About() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <span className="inline-block px-4 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-sm font-medium rounded-full mb-4">
-              Our Values
+              {t('about.ourValues')}
             </span>
             <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-              What We Stand For
+              {t('about.whatWeStandFor')}
             </h2>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
@@ -105,10 +108,10 @@ export default function About() {
                       <Icon className={`w-7 h-7 text-${color}-600 dark:text-${color}-400`} />
                     </div>
                     <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                      {value.title}
+                      {getText(value.title)}
                     </h3>
                     <p className="text-sm text-slate-600 dark:text-slate-400">
-                      {value.description}
+                      {getText(value.description)}
                     </p>
                   </CardBody>
                 </Card>
@@ -126,29 +129,29 @@ export default function About() {
               <div className="sticky top-28">
                 <img
                   src={aboutContent.principalMessage.image}
-                  alt={aboutContent.principalMessage.name}
+                  alt={getText(aboutContent.principalMessage.name)}
                   className="w-full max-w-xs mx-auto rounded-2xl shadow-xl"
                 />
                 <div className="text-center mt-6">
                   <h3 className="text-xl font-bold text-slate-900 dark:text-white">
-                    {aboutContent.principalMessage.name}
+                    {getText(aboutContent.principalMessage.name)}
                   </h3>
                   <p className="text-blue-600 dark:text-blue-400 font-medium">
-                    {aboutContent.principalMessage.title}
+                    {getText(aboutContent.principalMessage.title)}
                   </p>
                 </div>
               </div>
             </div>
             <div className="lg:col-span-2">
               <span className="inline-block px-4 py-1 bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-300 text-sm font-medium rounded-full mb-4">
-                Principal's Message
+                {t('about.principalMessage')}
               </span>
               <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-6">
-                A Word From Our Principal
+                {t('about.wordFromPrincipal')}
               </h2>
               <div className="prose prose-lg dark:prose-invert max-w-none">
                 <p className="text-slate-600 dark:text-slate-400 whitespace-pre-line leading-relaxed">
-                  {aboutContent.principalMessage.message}
+                  {getText(aboutContent.principalMessage.message)}
                 </p>
               </div>
             </div>
@@ -166,7 +169,7 @@ export default function About() {
                   {stat.value}
                 </div>
                 <div className="text-blue-100 text-sm md:text-base">
-                  {stat.label}
+                  {getText(stat.label)}
                 </div>
               </div>
             ))}
