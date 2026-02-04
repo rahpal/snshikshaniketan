@@ -1,13 +1,13 @@
 // School Information
 export const schoolInfo = {
-  name: "S.N.S. Shiksha Niketan",
+  name: "S.N. Shiksha Niketan School",
   tagline: "Nurturing Young Minds, Building Bright Futures",
-  established: 2010,
+  established: 2004,
   classes: "1 to 5",
-  address: "123 Education Lane, Knowledge City, State - 123456",
-  phone: "+91 98765 43210",
-  email: "info@snsshikshaniketan.edu",
-  timing: "Monday - Saturday: 8:00 AM - 2:00 PM",
+  address: "Panthar Moad Road, near BSNL Tower, Sarai Joga, Uttar Pradesh 209859",
+  phone: "+91 9454445566",
+  email: "snshikshaniketan@gmail.com",
+  timing: "Monday - Saturday: 8:30 AM - 1:00 PM",
 };
 
 // Navigation Links
@@ -23,7 +23,7 @@ export const navLinks = [
 export const heroSlides = [
   {
     id: 1,
-    title: "Welcome to S.N.S. Shiksha Niketan",
+    title: "Welcome to S.N. Shiksha Niketan School",
     subtitle: "Where Every Child Shines",
     description: "A nurturing environment for your child's first steps into the world of knowledge.",
     image: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1200",
@@ -46,9 +46,9 @@ export const heroSlides = [
 
 // School Stats
 export const schoolStats = [
-  { id: 1, value: "15+", label: "Years of Excellence" },
-  { id: 2, value: "500+", label: "Happy Students" },
-  { id: 3, value: "30+", label: "Qualified Teachers" },
+  { id: 1, value: "20+", label: "Years of Excellence" },
+  { id: 2, value: "300+", label: "Happy Students" },
+  { id: 3, value: "8+", label: "Qualified Teachers" },
   { id: 4, value: "100%", label: "Parent Satisfaction" },
 ];
 
