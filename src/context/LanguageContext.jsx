@@ -10,7 +10,7 @@ export function LanguageProvider({ children }) {
         return saved;
       }
     }
-    return 'en';
+    return 'hi';
   });
 
   useEffect(() => {

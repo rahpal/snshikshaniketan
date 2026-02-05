@@ -131,6 +131,10 @@ export const translations = {
       en: 'Have a question? Fill out the form and we\'ll get back to you.',
       hi: 'कोई सवाल है? फॉर्म भरें और हम आपसे संपर्क करेंगे।'
     },
+    mapTitle: {
+      en: 'School Location Map',
+      hi: 'स्कूल स्थान का नक्शा'
+    },
   },
 
   // Forms

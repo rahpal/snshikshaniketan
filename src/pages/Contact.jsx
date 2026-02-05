@@ -99,17 +99,16 @@ export default function Contact() {
               </h2>
               <Card className="h-[400px] lg:h-[calc(100%-80px)]">
                 <CardBody className="p-0 h-full">
-                  <div className="w-full h-full bg-slate-200 dark:bg-slate-700 rounded-xl flex items-center justify-center">
-                    <div className="text-center p-8">
-                      <MapPin className="w-16 h-16 text-slate-400 dark:text-slate-500 mx-auto mb-4" />
-                      <p className="text-slate-600 dark:text-slate-400 mb-4">
-                        Interactive map would be embedded here
-                      </p>
-                      <p className="text-sm text-slate-500 dark:text-slate-500">
-                        {getText(schoolInfo.address)}
-                      </p>
-                    </div>
-                  </div>
+                  <iframe
+                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3571.8!2d80.7183631!3d26.6033607!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x399c0fe60815f3c9%3A0xee71d0f8e611adfe!2sS.N.%20Shiksha%20Niketan!5e0!3m2!1sen!2sin!4v1700000000000!5m2!1sen!2sin"
+                    width="100%"
+                    height="100%"
+                    style={{ border: 0, borderRadius: '0.75rem' }}
+                    allowFullScreen=""
+                    loading="lazy"
+                    referrerPolicy="no-referrer-when-downgrade"
+                    title={t('contact.mapTitle')}
+                  />
                 </CardBody>
               </Card>
             </div>
