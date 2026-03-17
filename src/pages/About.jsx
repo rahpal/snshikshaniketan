@@ -1,6 +1,6 @@
 import { Target, Eye, Heart, Star, Users, Award } from 'lucide-react';
 import Card, { CardBody } from '../components/ui/Card';
-import { aboutContent, schoolInfo, schoolStats } from '../data/siteData';
+import { aboutContent, schoolInfo, schoolStats, schoolImages } from '../data/siteData';
 import { useTranslation } from '../hooks/useTranslation';
 
 export default function About() {
@@ -37,7 +37,7 @@ export default function About() {
             </div>
             <div className="relative">
               <img
-                src="https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600"
+                src={schoolImages.schoolBuilding}
                 alt="School building"
                 className="rounded-2xl shadow-xl"
               />

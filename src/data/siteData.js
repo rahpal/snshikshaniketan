@@ -1,3 +1,35 @@
+// Image imports
+import morningAssembly2 from '../assets/images/morning_assembly_2.jpg';
+import classroomStudentAtBoard from '../assets/images/classroom_student_at_board.jpg';
+import schoolBuildingWide from '../assets/images/school_building_wide.jpg';
+import classroomMathTeaching from '../assets/images/classroom_math_teaching.jpg';
+import classroomYoungStudents from '../assets/images/classroom_young_students.jpg';
+import artClass from '../assets/images/art_class.jpg';
+import examHall from '../assets/images/exam_hall.jpg';
+import prizeDistributionGirl from '../assets/images/prize_distribution_girl.jpg';
+import healthCheckupGirl from '../assets/images/health_checkup_girl.jpg';
+import republicDayAssembly from '../assets/images/republic_day_assembly.jpg';
+import flagHoisting from '../assets/images/flag_hoisting.jpg';
+import independenceDayFlag from '../assets/images/independence_day_flag.jpg';
+import morningAssembly1 from '../assets/images/morning_assembly_1.jpg';
+import schoolPodium from '../assets/images/school_podium.jpg';
+import preetiPal from '../assets/images/teacher_img/preeti_pal.jpg';
+import priyaDixit from '../assets/images/teacher_img/priya_dixit.jpg';
+import fieldTripMonumentGroup from '../assets/images/field_trip_monument_group.jpg';
+import fieldTripMuseumGroup from '../assets/images/field_trip_museum_group.jpg';
+import fieldTripMuseumInteractive from '../assets/images/field_trip_museum_interactive.jpg';
+import childrensDayJunior from '../assets/images/childrens_day_junior.jpg';
+import republicDaySpeech from '../assets/images/republic_day_speech.jpg';
+import resultDistribution from '../assets/images/result_distribution.jpg';
+import treePlantation from '../assets/images/tree_plantation.jpg';
+import studentSpeech from '../assets/images/student_speech.jpg';
+
+// Exported for use in About page
+export const schoolImages = {
+  schoolBuilding: morningAssembly1,
+  principalImage: priyaDixit,
+};
+
 // School Information
 export const schoolInfo = {
   name: { en: "S.N. Shiksha Niketan School", hi: "एस.एन. शिक्षा निकेतन स्कूल" },
@@ -41,7 +73,7 @@ export const heroSlides = [
       en: "A nurturing environment for your child's first steps into the world of knowledge.",
       hi: "ज्ञान की दुनिया में आपके बच्चे के पहले कदम के लिए एक पोषण वातावरण।"
     },
-    image: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=1200",
+    image: morningAssembly2,
   },
   {
     id: 2,
@@ -51,7 +83,7 @@ export const heroSlides = [
       en: "We believe in making learning enjoyable and engaging for young minds.",
       hi: "हम युवा मन के लिए सीखने को आनंददायक और रोचक बनाने में विश्वास करते हैं।"
     },
-    image: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=1200",
+    image: classroomStudentAtBoard,
   },
   {
     id: 3,
@@ -61,7 +93,7 @@ export const heroSlides = [
       en: "Preparing students for a successful future with quality primary education.",
       hi: "गुणवत्तापूर्ण प्राथमिक शिक्षा के साथ छात्रों को सफल भविष्य के लिए तैयार करना।"
     },
-    image: "https://images.unsplash.com/photo-1427504494785-3a9ca7044f45?w=1200",
+    image: schoolBuildingWide,
   },
 ];
 
@@ -170,23 +202,32 @@ export const galleryCategories = [
   { en: "All", hi: "सभी" },
   { en: "Classrooms", hi: "कक्षाएं" },
   { en: "Events", hi: "कार्यक्रम" },
-  { en: "Sports", hi: "खेल" },
-  { en: "Celebrations", hi: "उत्सव" }
+  { en: "Celebrations", hi: "उत्सव" },
+  { en: "Campus", hi: "परिसर" },
+  { en: "Field Trips", hi: "शैक्षिक भ्रमण" }
 ];
 
 export const galleryImages = [
-  { id: 1, src: "https://images.unsplash.com/photo-1580582932707-520aed937b7b?w=600", category: "Classrooms", title: { en: "Modern Classroom", hi: "आधुनिक कक्षा" } },
-  { id: 2, src: "https://images.unsplash.com/photo-1577896851231-70ef18881754?w=600", category: "Events", title: { en: "Annual Day", hi: "वार्षिक दिवस" } },
-  { id: 3, src: "https://images.unsplash.com/photo-1529390079861-591de354faf5?w=600", category: "Sports", title: { en: "Sports Day", hi: "खेल दिवस" } },
-  { id: 4, src: "https://images.unsplash.com/photo-1513151233558-d860c5398176?w=600", category: "Celebrations", title: { en: "Diwali Celebration", hi: "दिवाली उत्सव" } },
-  { id: 5, src: "https://images.unsplash.com/photo-1497633762265-9d179a990aa6?w=600", category: "Classrooms", title: { en: "Library", hi: "पुस्तकालय" } },
-  { id: 6, src: "https://images.unsplash.com/photo-1544776193-352d25ca82cd?w=600", category: "Events", title: { en: "Science Exhibition", hi: "विज्ञान प्रदर्शनी" } },
-  { id: 7, src: "https://images.unsplash.com/photo-1571210862729-78a52d3779a2?w=600", category: "Sports", title: { en: "Cricket Match", hi: "क्रिकेट मैच" } },
-  { id: 8, src: "https://images.unsplash.com/photo-1530103862676-de8c9debad1d?w=600", category: "Celebrations", title: { en: "Independence Day", hi: "स्वतंत्रता दिवस" } },
-  { id: 9, src: "https://images.unsplash.com/photo-1503676260728-1c00da094a0b?w=600", category: "Classrooms", title: { en: "Art Class", hi: "कला कक्षा" } },
-  { id: 10, src: "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=600", category: "Events", title: { en: "Parent Meeting", hi: "अभिभावक बैठक" } },
-  { id: 11, src: "https://images.unsplash.com/photo-1461896836934-481919b91f91?w=600", category: "Sports", title: { en: "Yoga Session", hi: "योग सत्र" } },
-  { id: 12, src: "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=600", category: "Celebrations", title: { en: "Christmas Party", hi: "क्रिसमस पार्टी" } },
+  { id: 1, src: classroomMathTeaching, category: "Classrooms", title: { en: "Math Class", hi: "गणित कक्षा" } },
+  { id: 2, src: examHall, category: "Events", title: { en: "Examination", hi: "परीक्षा" } },
+  { id: 3, src: republicDayAssembly, category: "Celebrations", title: { en: "Republic Day", hi: "गणतंत्र दिवस" } },
+  { id: 4, src: morningAssembly1, category: "Campus", title: { en: "Morning Assembly", hi: "प्रातःकालीन सभा" } },
+  { id: 5, src: fieldTripMonumentGroup, category: "Field Trips", title: { en: "Heritage Visit", hi: "विरासत भ्रमण" } },
+  { id: 6, src: classroomYoungStudents, category: "Classrooms", title: { en: "Primary Class", hi: "प्राथमिक कक्षा" } },
+  { id: 7, src: resultDistribution, category: "Events", title: { en: "Result Day", hi: "परिणाम दिवस" } },
+  { id: 8, src: childrensDayJunior, category: "Celebrations", title: { en: "Children's Day", hi: "बाल दिवस" } },
+  { id: 9, src: schoolBuildingWide, category: "Campus", title: { en: "School Campus", hi: "विद्यालय परिसर" } },
+  { id: 10, src: fieldTripMuseumGroup, category: "Field Trips", title: { en: "Museum Visit", hi: "संग्रहालय भ्रमण" } },
+  { id: 11, src: artClass, category: "Classrooms", title: { en: "Art Class", hi: "कला कक्षा" } },
+  { id: 12, src: studentSpeech, category: "Events", title: { en: "Speech Competition", hi: "भाषण प्रतियोगिता" } },
+  { id: 13, src: flagHoisting, category: "Celebrations", title: { en: "Flag Hoisting", hi: "ध्वजारोहण" } },
+  { id: 14, src: schoolPodium, category: "Campus", title: { en: "School Stage", hi: "विद्यालय मंच" } },
+  { id: 15, src: fieldTripMuseumInteractive, category: "Field Trips", title: { en: "Science Museum", hi: "विज्ञान संग्रहालय" } },
+  { id: 16, src: prizeDistributionGirl, category: "Events", title: { en: "Prize Distribution", hi: "पुरस्कार वितरण" } },
+  { id: 17, src: republicDaySpeech, category: "Celebrations", title: { en: "Republic Day Speech", hi: "गणतंत्र दिवस भाषण" } },
+  { id: 18, src: independenceDayFlag, category: "Celebrations", title: { en: "Independence Day", hi: "स्वतंत्रता दिवस" } },
+  { id: 19, src: treePlantation, category: "Events", title: { en: "Tree Plantation", hi: "वृक्षारोपण" } },
+  { id: 20, src: healthCheckupGirl, category: "Events", title: { en: "Health Checkup", hi: "स्वास्थ्य जांच" } },
 ];
 
 // Admission Information
@@ -317,7 +358,7 @@ Our founder believed that the early years of education are crucial in shaping a 
   ],
 
   principalMessage: {
-    name: { en: "Dr. Sunita Verma", hi: "डॉ. सुनीता वर्मा" },
+    name: { en: "Ms. Priya Dixit", hi: "श्रीमती प्रिया दीक्षित" },
     title: { en: "Principal", hi: "प्रधानाचार्य" },
     message: {
       en: `Dear Parents and Students,
@@ -329,7 +370,7 @@ At S.N. Shiksha Niketan, we believe that every child is unique and has the poten
 We look forward to partnering with you in your child's educational journey.
 
 Warm regards,
-Dr. Sunita Verma`,
+Ms. Priya Dixit`,
       hi: `प्रिय अभिभावक और छात्रगण,
 
 एस.एन. शिक्षा निकेतन में आपका स्वागत है! इस अद्भुत संस्थान की प्रधानाचार्य के रूप में, मुझे युवा मन के पोषण और जीवनभर सीखने के लिए मजबूत नींव बनाने की हमारी प्रतिबद्धता पर बहुत गर्व है।
@@ -339,9 +380,9 @@ Dr. Sunita Verma`,
 हम आपके बच्चे की शैक्षिक यात्रा में आपके साथ साझेदारी की प्रतीक्षा कर रहे हैं।
 
 सादर,
-डॉ. सुनीता वर्मा`
+श्रीमती प्रिया दीक्षित`
     },
-    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=300",
+    image: priyaDixit,
   },
 };
 
