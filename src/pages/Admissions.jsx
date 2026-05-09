@@ -125,65 +125,6 @@ export default function Admissions() {
         </div>
       </section>
 
-      {/* Fee Structure */}
-      <section className="py-20 bg-white dark:bg-slate-900">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <span className="inline-block px-4 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-sm font-medium rounded-full mb-4">
-              {t('admissions.feeStructure')}
-            </span>
-            <h2 className="text-3xl md:text-4xl font-bold text-slate-900 dark:text-white mb-4">
-              {t('admissions.transparentFees')}
-            </h2>
-          </div>
-
-          <div className="max-w-3xl mx-auto">
-            <Card>
-              <CardBody className="p-0">
-                <div className="overflow-x-auto">
-                  <table className="w-full">
-                    <thead>
-                      <tr className="bg-slate-50 dark:bg-slate-800">
-                        <th className="text-left px-6 py-4 font-semibold text-slate-900 dark:text-white">
-                          {t('admissions.feeType')}
-                        </th>
-                        <th className="text-right px-6 py-4 font-semibold text-slate-900 dark:text-white">
-                          {t('admissions.amount')}
-                        </th>
-                        <th className="text-left px-6 py-4 font-semibold text-slate-900 dark:text-white">
-                          {t('admissions.note')}
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {admissionInfo.fees.map((fee, index) => (
-                        <tr
-                          key={index}
-                          className="border-t border-slate-200 dark:border-slate-700"
-                        >
-                          <td className="px-6 py-4 text-slate-700 dark:text-slate-300">
-                            {getText(fee.item)}
-                          </td>
-                          <td className="px-6 py-4 text-right font-semibold text-blue-600 dark:text-blue-400">
-                            {fee.amount}
-                          </td>
-                          <td className="px-6 py-4 text-sm text-slate-500 dark:text-slate-400">
-                            {getText(fee.note)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-              </CardBody>
-            </Card>
-            <p className="text-center text-sm text-slate-500 dark:text-slate-400 mt-4">
-              {t('admissions.feeDisclaimer')}
-            </p>
-          </div>
-        </div>
-      </section>
-
       {/* Inquiry Form */}
       <section className="py-20 bg-slate-50 dark:bg-slate-800">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">

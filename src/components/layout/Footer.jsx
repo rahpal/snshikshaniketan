@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
-import { GraduationCap, MapPin, Phone, Mail, Clock, Facebook, Instagram, Twitter, Youtube } from 'lucide-react';
+import { MapPin, Phone, Mail, Clock, Facebook, Instagram, Twitter, Youtube } from 'lucide-react';
 import { schoolInfo, navLinks, socialLinks } from '../../data/siteData';
 import { useTranslation } from '../../hooks/useTranslation';
+import logo from '../../assets/images/sn_logo.jpeg';
 
 const iconMap = {
   Facebook,
@@ -21,9 +22,11 @@ export default function Footer() {
           {/* School Info */}
           <div className="space-y-4">
             <div className="flex items-center space-x-3">
-              <div className="bg-blue-600 p-2 rounded-lg">
-                <GraduationCap className="w-6 h-6 text-white" />
-              </div>
+              <img
+                src={logo}
+                alt={`${schoolInfo.name.en} logo`}
+                className="w-12 h-12 rounded-lg object-cover shadow-sm"
+              />
               <h3 className="text-xl font-bold text-white">{getText(schoolInfo.name)}</h3>
             </div>
             <p className="text-sm text-slate-400">

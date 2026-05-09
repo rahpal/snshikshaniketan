@@ -86,15 +86,6 @@ export const translations = {
       en: 'Please keep the following documents ready for the admission process:',
       hi: 'कृपया प्रवेश प्रक्रिया के लिए निम्नलिखित दस्तावेज तैयार रखें:'
     },
-    feeStructure: { en: 'Fee Structure', hi: 'शुल्क संरचना' },
-    transparentFees: { en: 'Transparent Fee Information', hi: 'पारदर्शी शुल्क जानकारी' },
-    feeType: { en: 'Fee Type', hi: 'शुल्क प्रकार' },
-    amount: { en: 'Amount', hi: 'राशि' },
-    note: { en: 'Note', hi: 'टिप्पणी' },
-    feeDisclaimer: {
-      en: '* Fees are subject to revision. Please contact the school office for the latest information.',
-      hi: '* शुल्क संशोधन के अधीन हैं। नवीनतम जानकारी के लिए कृपया स्कूल कार्यालय से संपर्क करें।'
-    },
     getStarted: { en: 'Get Started', hi: 'शुरू करें' },
     admissionInquiry: { en: 'Admission Inquiry', hi: 'प्रवेश पूछताछ' },
     inquirySubtitle: {

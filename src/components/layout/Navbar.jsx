@@ -1,10 +1,11 @@
 import { useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { Menu, X, GraduationCap } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import ThemeToggle from '../ui/ThemeToggle';
 import LanguageToggle from '../ui/LanguageToggle';
 import { navLinks, schoolInfo } from '../../data/siteData';
 import { useTranslation } from '../../hooks/useTranslation';
+import logo from '../../assets/images/sn_logo.jpeg';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -19,9 +20,11 @@ export default function Navbar() {
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link to="/" className="flex items-center space-x-3">
-            <div className="bg-blue-600 p-2 rounded-lg">
-              <GraduationCap className="w-8 h-8 text-white" />
-            </div>
+            <img
+              src={logo}
+              alt={`${schoolInfo.name.en} logo`}
+              className="w-12 h-12 rounded-lg object-cover shadow-sm"
+            />
             <div className="hidden sm:block">
               <h1 className="text-xl font-bold text-slate-900 dark:text-white">
                 {getText(schoolInfo.name)}

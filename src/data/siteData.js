@@ -275,33 +275,7 @@ export const admissionInfo = {
   ],
   documents: [
     { en: "Birth Certificate", hi: "जन्म प्रमाण पत्र" },
-    { en: "Aadhar Card (Child & Parents)", hi: "आधार कार्ड (बच्चे और माता-पिता)" },
-    { en: "Previous School Transfer Certificate (if applicable)", hi: "पिछले स्कूल का स्थानांतरण प्रमाण पत्र (यदि लागू हो)" },
-    { en: "Passport Size Photographs (4 copies)", hi: "पासपोर्ट साइज फोटो (4 प्रतियां)" },
-    { en: "Address Proof", hi: "पता प्रमाण" },
-    { en: "Medical Fitness Certificate", hi: "चिकित्सा फिटनेस प्रमाण पत्र" },
-  ],
-  fees: [
-    {
-      item: { en: "Registration Fee", hi: "पंजीकरण शुल्क" },
-      amount: "₹500",
-      note: { en: "One-time, non-refundable", hi: "एक बार, वापसी योग्य नहीं" }
-    },
-    {
-      item: { en: "Admission Fee", hi: "प्रवेश शुल्क" },
-      amount: "₹5,000",
-      note: { en: "One-time", hi: "एक बार" }
-    },
-    {
-      item: { en: "Tuition Fee (Monthly)", hi: "ट्यूशन फीस (मासिक)" },
-      amount: "₹2,000",
-      note: { en: "Payable quarterly", hi: "त्रैमासिक भुगतान" }
-    },
-    {
-      item: { en: "Annual Charges", hi: "वार्षिक शुल्क" },
-      amount: "₹3,000",
-      note: { en: "Includes books & uniform", hi: "किताबें और यूनिफॉर्म शामिल" }
-    },
+    { en: "Aadhar Card", hi: "आधार कार्ड" },
   ],
 };
 

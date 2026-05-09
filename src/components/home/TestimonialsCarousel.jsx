@@ -1,6 +1,6 @@
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Pagination } from 'swiper/modules';
-import { Quote } from 'lucide-react';
+import { Quote, User } from 'lucide-react';
 import Card, { CardBody } from '../ui/Card';
 import { testimonials } from '../../data/siteData';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -58,11 +58,9 @@ export default function TestimonialsCarousel() {
                     "{getText(testimonial.content)}"
                   </p>
                   <div className="flex items-center">
-                    <img
-                      src={testimonial.image}
-                      alt={getText(testimonial.name)}
-                      className="w-12 h-12 rounded-full object-cover mr-4"
-                    />
+                    <div className="w-12 h-12 rounded-full bg-blue-100 dark:bg-blue-900 flex items-center justify-center mr-4 flex-shrink-0">
+                      <User className="w-6 h-6 text-blue-600 dark:text-blue-300" />
+                    </div>
                     <div>
                       <h4 className="font-semibold text-slate-900 dark:text-white">
                         {getText(testimonial.name)}
