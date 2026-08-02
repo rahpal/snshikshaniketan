@@ -1,0 +1,61 @@
+name: Deploy (self-hosted / mini PC)
+
+# Builds the site image on the mini PC and restarts the rootless Podman
+# container that serves snshikshaniketan.org through the Cloudflare tunnel.
+#
+# This runs alongside deploy.yml (Vercel) — both fire on push to main, so the
+# two hosts stay in sync. Runs on the repo-scoped runner labelled `sns`; the
+# other runners on that box serve arbitrage-bot and razor-swap and will never
+# pick up this job.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+# Never let two deploys rebuild/restart the same container concurrently.
+concurrency:
+  group: deploy-sns
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: [self-hosted, Linux, X64, sns]
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # The whole toolchain lives in the builder stage, so the runner host's
+      # Node version is irrelevant here.
+      - name: Build image
+        run: podman build -t localhost/snshikshaniketan:latest .
+
+      - name: Restart container
+        run: systemctl --user restart snshikshaniketan.service
+
+      - name: Wait for the site to come up
+        run: |
+          for i in $(seq 1 20); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8081/healthz || true)
+            if [ "$code" = "200" ]; then
+              echo "healthy after $((i*2))s"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "::error::site did not become healthy within 40s"
+          systemctl --user status snshikshaniketan.service --no-pager || true
+          podman logs --tail 50 snshikshaniketan || true
+          exit 1
+
+      # Guards the failure mode a plain "is it up" check misses: nginx serving
+      # index.html but client-side routes 404ing because try_files regressed.
+      - name: Verify SPA fallback
+        run: |
+          code=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8081/admissions)
+          [ "$code" = "200" ] || { echo "::error::SPA fallback broken (/admissions -> $code)"; exit 1; }
+
+      - name: Prune dangling images
+        if: always()
+        run: podman image prune -f || true

@@ -1,0 +1,14 @@
+# Keep the build context small and stop host artefacts leaking into the image.
+# node_modules especially: it must be installed inside the builder (Node 22),
+# never copied from a host that runs Node 18.
+node_modules
+dist
+dist-ssr
+.git
+.github
+.vscode
+*.local
+npm-debug.log*
+.DS_Store
+Dockerfile
+.dockerignore
