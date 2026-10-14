@@ -20,8 +20,8 @@ import {
 export const NAV_ITEMS = [
   { path: '/', labelKey: 'nav.dashboard', icon: LayoutDashboard, adminOnly: false, ready: true },
   { path: '/collect', labelKey: 'nav.collect', icon: BanknoteArrowUp, adminOnly: false, ready: true },
-  { path: '/classwise', labelKey: 'nav.classwise', icon: CalendarCheck, adminOnly: false, ready: false },
-  { path: '/defaulters', labelKey: 'nav.defaulters', icon: ClipboardList, adminOnly: false, ready: false },
+  { path: '/classwise', labelKey: 'nav.classwise', icon: CalendarCheck, adminOnly: false, ready: true },
+  { path: '/defaulters', labelKey: 'nav.defaulters', icon: ClipboardList, adminOnly: false, ready: true },
   { path: '/roster', labelKey: 'nav.roster', icon: UsersRound, adminOnly: true, ready: true },
   { path: '/structure', labelKey: 'nav.structure', icon: IndianRupee, adminOnly: true, ready: false },
   { path: '/users', labelKey: 'nav.users', icon: Users, adminOnly: true, ready: false },

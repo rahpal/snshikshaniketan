@@ -27,13 +27,18 @@ Phases 0, 1 and 2 of the plan:
   printable receipt
 - **The student list**: CSV import, add one at a time, and automatic addition of
   anyone a payment is recorded for
+- **The class-wise view**: a register of students by month, showing what was
+  paid, what is owed, and what is simply not due yet, with per-month totals and
+  a CSV download
+- **Pending fees**: who owes what, worst first, with parent contacts, printable
+- **A student's own record**: every receipt for the year, with months and
+  amounts
 - The spreadsheet bootstrap script, which creates the five tabs and the first
   administrator
 - English and Hindi, light and dark, and a layout that works on a phone
 
-The class-wise view, the pending-fees report, user management, the fee
-structure and the activity log are Phases 3–4. Their screens exist in the
-navigation and are marked "Soon".
+User management, the fee structure and the activity log are Phase 4. Their
+screens exist in the navigation and are marked "Soon".
 
 ### The school's setup
 

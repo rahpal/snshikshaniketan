@@ -8,7 +8,7 @@ Status: **Phases 0, 1 and 2 built** · Branch: `claude/tuition-fee-app-7ip94f`
 | 0 — Scaffold, Sheets layer, bootstrap script, docs | **done** |
 | 1 — Authentication, roles, forced password change, lockout | **done** |
 | 2 — Payment entry form, receipt, student list with CSV import | **done** |
-| 3 — Class-wise view, ledger, defaulters | not started |
+| 3 — Class-wise view, student record, pending fees | **done** |
 | 4 — Admin: users, fee structure, void/edit, audit | not started |
 | 5 — Hardening and handover | not started |
 
@@ -281,7 +281,7 @@ Routes are at the app's own root (it has its own hostname), not under a `/fees` 
 | `/login` | all | Username + password. No sign-up link anywhere. |
 | `/` | all | Dashboard: collected this month, pending count, recent receipts, quick links. |
 | `/collect` | all | The payment entry form (§9). |
-| `/classwise` | all | **The main view.** Class + academic-year selector; grid of students (rows) × Apr–Mar (columns). Green = paid (amount and receipt link on hover), red = due, grey = not applicable. Row and column totals, "X of Y students fully paid", CSV export for admins. |
+| `/classwise` | all | **The main view.** Class + academic-year selector; grid of students (rows) × Apr–Mar (columns). Green = paid, with the amount; red = owed; a faint dot = a month that has not come round yet. That last distinction is what makes the grid readable: painting every unpaid month red would show half the year in alarm from April and teach everyone to ignore the colour. Row totals, per-month column totals, collected/with-dues/months-owed summary, and a CSV download for admins. Money recorded against a student no longer on the roster is reported separately rather than dropped. |
 | `/students/:id` | all | One student's full ledger. |
 | `/receipt/:receiptNo` | all | Printable receipt. |
 | `/defaulters` | all | Unpaid list with parent contacts, filterable by class. |

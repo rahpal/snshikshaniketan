@@ -11,6 +11,7 @@ export default handler('GET', async (req, res) => {
   const query = parse(listQuerySchema, {
     academic_year: url.searchParams.get('academic_year') ?? undefined,
     class: url.searchParams.get('class') ?? undefined,
+    student_id: url.searchParams.get('student_id') ?? undefined,
   });
 
   const students = await listStudents({
@@ -19,5 +20,10 @@ export default handler('GET', async (req, res) => {
     activeOnly: url.searchParams.get('include_inactive') !== 'true',
   });
 
-  return ok(res, { students });
+  // Narrowing to one student is what the ledger screen asks for.
+  const filtered = query.student_id
+    ? students.filter((student) => student.student_id === query.student_id)
+    : students;
+
+  return ok(res, { students: filtered });
 });

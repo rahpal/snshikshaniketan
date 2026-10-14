@@ -529,3 +529,96 @@ test('a malformed academic year is a field error, not a server error', async () 
     assert.ok(response.json.details.academic_year);
   });
 });
+
+// ---- the class-wise report ------------------------------------------------
+
+test('the class-wise report joins the roster to the payments', async () => {
+  await withSheet(async () => {
+    const admin = await signedIn('admin');
+    await invoke(importStudents, {
+      method: 'POST',
+      cookie: admin,
+      body: {
+        academic_year: YEAR,
+        students: [
+          { student_name: 'Arjun Verma', class: '5', parent_name: 'Rakesh Verma', contact: '98765' },
+          { student_name: 'Meera Singh', class: '5', parent_name: 'Anil Singh' },
+          { student_name: 'Kabir Khan', class: 'NUR' },
+        ],
+      },
+    });
+
+    const operator = await signedIn('operator');
+    await pay(operator, { payment_date: '2026-06-10' });
+
+    const { default: classwise } = await import('../api/reports/classwise.js');
+    const response = await invoke(classwise, {
+      cookie: operator,
+      url: `/api/reports/classwise?academic_year=${YEAR}&class=5`,
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.json.months.length, 12);
+    assert.equal(response.json.students.length, 2, 'only class 5');
+    assert.equal(response.json.totals.collected, 2400);
+
+    const arjun = response.json.students.find((s) => s.student_name === 'Arjun Verma');
+    assert.equal(arjun.paid_count, 3);
+    assert.equal(arjun.cells['2026-04'].amount, 800);
+    assert.equal(arjun.parent_name, 'Rakesh Verma');
+    assert.ok(arjun.due_months.length > 0, 'later months are still owed');
+
+    const meera = response.json.students.find((s) => s.student_name === 'Meera Singh');
+    assert.equal(meera.paid_total, 0);
+    assert.equal(response.json.totals.with_dues, 2);
+  });
+});
+
+test('the report covers every class when no class is given', async () => {
+  await withSheet(async () => {
+    const admin = await signedIn('admin');
+    await invoke(importStudents, {
+      method: 'POST',
+      cookie: admin,
+      body: {
+        academic_year: YEAR,
+        students: [
+          { student_name: 'Arjun Verma', class: '5' },
+          { student_name: 'Kabir Khan', class: 'NUR' },
+        ],
+      },
+    });
+
+    const { default: classwise } = await import('../api/reports/classwise.js');
+    const response = await invoke(classwise, { cookie: admin, url: `/api/reports/classwise?academic_year=${YEAR}` });
+
+    assert.equal(response.json.students.length, 2);
+    assert.equal(response.json.class, null);
+    assert.deepEqual(
+      response.json.students.map((s) => s.class).sort(),
+      ['5', 'NUR']
+    );
+  });
+});
+
+test('the report needs a session', async () => {
+  await withSheet(async () => {
+    const { default: classwise } = await import('../api/reports/classwise.js');
+    const response = await invoke(classwise, { url: `/api/reports/classwise?academic_year=${YEAR}` });
+    assert.equal(response.status, 401);
+  });
+});
+
+test('one student can be looked up by id for their ledger', async () => {
+  await withSheet(async () => {
+    const cookie = await signedIn('operator');
+    const created = await pay(cookie);
+
+    const response = await invoke(listStudents, {
+      cookie,
+      url: `/api/students/list?academic_year=${YEAR}&student_id=${created.json.student_id}`,
+    });
+    assert.equal(response.json.students.length, 1);
+    assert.equal(response.json.students[0].student_name, 'Arjun Verma');
+  });
+});

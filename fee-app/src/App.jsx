@@ -8,6 +8,9 @@ import Dashboard from './pages/Dashboard.jsx';
 import CollectPayment from './pages/CollectPayment.jsx';
 import Receipt from './pages/Receipt.jsx';
 import Roster from './pages/Roster.jsx';
+import ClassWise from './pages/ClassWise.jsx';
+import Pending from './pages/Pending.jsx';
+import StudentLedger from './pages/StudentLedger.jsx';
 import ComingSoon from './pages/ComingSoon.jsx';
 import NotFound from './pages/NotFound.jsx';
 
@@ -36,6 +39,9 @@ export default function App() {
           <Route index element={<Dashboard />} />
           <Route path="collect" element={<CollectPayment />} />
           <Route path="receipt/:receiptNo" element={<Receipt />} />
+          <Route path="classwise" element={<ClassWise />} />
+          <Route path="defaulters" element={<Pending />} />
+          <Route path="students/:studentId" element={<StudentLedger />} />
 
           {sharedPlaceholders.map(({ path, labelKey }) => (
             <Route key={path} path={path} element={<ComingSoon titleKey={labelKey} />} />
