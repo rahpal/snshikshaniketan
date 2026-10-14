@@ -47,8 +47,11 @@ const BASE_PAYMENT = {
   class: '5',
   student_name: 'Arjun Verma',
   parent_name: 'Rakesh Verma',
-  months: ['2026-04', '2026-05', '2026-06'],
-  amount: 2400,
+  months: [
+    { month: '2026-04', amount: 800 },
+    { month: '2026-05', amount: 800 },
+    { month: '2026-06', amount: 800 },
+  ],
   payment_date: '2026-06-10',
   payment_mode: 'upi',
   remarks: 'paid at office',
@@ -89,14 +92,61 @@ test('an operator can record a payment covering several months', async () => {
   });
 });
 
-test('an amount that does not divide evenly still sums to the total', async () => {
+test('each month keeps the amount entered against it', async () => {
   await withSheet(async (sheet) => {
     const cookie = await signedIn();
-    await pay(cookie, { amount: 1000 });
+    // June costs more (an exam month); July is a part payment.
+    const response = await pay(cookie, {
+      months: [
+        { month: '2026-05', amount: 800 },
+        { month: '2026-06', amount: 1200 },
+        { month: '2026-07', amount: 500 },
+      ],
+    });
 
+    assert.equal(response.status, 200);
+    assert.equal(response.json.total, 2500);
+
+    const byMonth = Object.fromEntries(
+      sheet.objects(TABS.PAYMENTS).map((row) => [row.month, Number(row.amount)])
+    );
+    assert.deepEqual(byMonth, { '2026-05': 800, '2026-06': 1200, '2026-07': 500 });
+
+    // Every row carries the same receipt total: the sum of the months.
+    const totals = sheet.objects(TABS.PAYMENTS).map((row) => Number(row.receipt_total));
+    assert.deepEqual(totals, [2500, 2500, 2500]);
+  });
+});
+
+test('amounts that do not add up neatly are stored exactly as entered', async () => {
+  await withSheet(async (sheet) => {
+    const cookie = await signedIn();
+    const response = await pay(cookie, {
+      months: [
+        { month: '2026-04', amount: 333.33 },
+        { month: '2026-05', amount: 333.33 },
+        { month: '2026-06', amount: 333.34 },
+      ],
+    });
+
+    assert.equal(response.json.total, 1000);
     const amounts = sheet.objects(TABS.PAYMENTS).map((row) => Number(row.amount));
-    assert.equal(amounts.length, 3);
-    assert.equal(Math.round(amounts.reduce((a, b) => a + b, 0) * 100) / 100, 1000);
+    assert.deepEqual(amounts.sort(), [333.33, 333.33, 333.34]);
+  });
+});
+
+test('a month with no amount, or a zero amount, is refused', async () => {
+  await withSheet(async () => {
+    const cookie = await signedIn();
+
+    const missing = await pay(cookie, { months: [{ month: '2026-04' }] });
+    assert.equal(missing.status, 400);
+
+    const zero = await pay(cookie, { months: [{ month: '2026-04', amount: 0 }] });
+    assert.equal(zero.status, 400);
+
+    const negative = await pay(cookie, { months: [{ month: '2026-04', amount: -800 }] });
+    assert.equal(negative.status, 400);
   });
 });
 
@@ -114,7 +164,7 @@ test('recording a payment for someone not on the list adds them to it', async ()
 
     // A second payment for the same child reuses that record rather than
     // creating a duplicate student.
-    const second = await pay(cookie, { months: ['2026-07'], amount: 800 });
+    const second = await pay(cookie, { months: [{ month: '2026-07', amount: 800 }] });
     assert.equal(second.status, 200);
     assert.equal(second.json.student_added, false);
     assert.equal(second.json.student_id, first.json.student_id);
@@ -127,7 +177,12 @@ test('paying a month twice is refused, and says which months and receipts clash'
     const cookie = await signedIn();
     const first = await pay(cookie);
 
-    const clash = await pay(cookie, { months: ['2026-06', '2026-07'], amount: 1600 });
+    const clash = await pay(cookie, {
+      months: [
+        { month: '2026-06', amount: 800 },
+        { month: '2026-07', amount: 800 },
+      ],
+    });
     assert.equal(clash.status, 409);
     assert.equal(clash.json.code, 'conflict');
     assert.equal(clash.json.details.already_paid.length, 1);
@@ -141,7 +196,7 @@ test('the duplicate warning can be overridden deliberately, and the override is 
     const cookie = await signedIn();
     await pay(cookie);
 
-    const forced = await pay(cookie, { months: ['2026-06'], amount: 800, allow_duplicate: true });
+    const forced = await pay(cookie, { months: [{ month: '2026-06', amount: 800 }], allow_duplicate: true });
     assert.equal(forced.status, 200);
     assert.equal(sheet.objects(TABS.PAYMENTS).length, 4);
 
@@ -166,7 +221,7 @@ test('months outside the academic year are refused', async () => {
   await withSheet(async () => {
     const cookie = await signedIn();
     // March 2026 belongs to 2025-26, not 2026-27.
-    const response = await pay(cookie, { months: ['2026-03'] });
+    const response = await pay(cookie, { months: [{ month: '2026-03', amount: 800 }] });
     assert.equal(response.status, 400);
     assert.match(response.json.error, /not part of 2026-27/);
   });
@@ -194,7 +249,11 @@ test('payments can be listed by class and read back as a receipt', async () => {
   await withSheet(async () => {
     const cookie = await signedIn();
     const created = await pay(cookie);
-    await pay(cookie, { class: '6', student_name: 'Meera Singh', months: ['2026-04'], amount: 900 });
+    await pay(cookie, {
+      class: '6',
+      student_name: 'Meera Singh',
+      months: [{ month: '2026-04', amount: 900 }],
+    });
 
     const classFive = await invoke(listPayments, { cookie, url: `/api/payments/list?academic_year=${YEAR}&class=5` });
     assert.equal(classFive.status, 200);

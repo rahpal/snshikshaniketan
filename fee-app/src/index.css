@@ -24,6 +24,16 @@ body {
     dark:placeholder:text-slate-500 dark:disabled:bg-slate-800;
 }
 
+/* Modifiers for .field-input. They need two classes to outrank the base rule,
+   which is why they are not plain utilities on the element. */
+.field-input.has-prefix {
+  padding-left: 1.75rem;
+}
+
+.field-input.is-flagged {
+  @apply border-amber-400 bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30;
+}
+
 .card {
   @apply rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900;
 }

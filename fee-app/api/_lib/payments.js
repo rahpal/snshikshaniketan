@@ -1,6 +1,5 @@
 import { PAYMENT_STATUS, TABS } from './sheet-schema.js';
 import { appendObjects, asNumber, asText, readTable } from './table.js';
-import { allocateAmount } from '../../shared/money.js';
 import { shortId, ulid } from './ulid.js';
 import { conflict } from './errors.js';
 
@@ -118,9 +117,10 @@ export function findAlreadyPaid(existing, { student_id, student_name, className,
 /**
  * Records a payment as one row per month, all sharing a receipt number.
  *
- * One row per month is what makes the class-wise view a filter rather than a
- * parse of a comma-separated list, and it lets a part-payment be seen against
- * the month it belongs to.
+ * Each month carries the amount that was entered against it, so a month that
+ * cost more or was part-paid is stored as what it actually was. The receipt
+ * total is the sum of the months - never the other way round, because dividing
+ * a total would fabricate per-month figures.
  */
 export async function createPayment(input, user) {
   const existing = await listPayments({ academic_year: input.academic_year, fresh: true });
@@ -129,7 +129,7 @@ export async function createPayment(input, user) {
     student_id: input.student_id,
     student_name: input.student_name,
     className: input.class,
-    months: input.months,
+    months: input.months.map((entry) => entry.month),
   });
 
   if (alreadyPaid.length > 0 && !input.allow_duplicate) {
@@ -144,11 +144,11 @@ export async function createPayment(input, user) {
     new Set(existing.map((payment) => payment.receipt_no))
   );
 
-  const months = [...input.months].sort();
-  const amounts = allocateAmount(input.amount, months.length);
+  const months = [...input.months].sort((a, b) => a.month.localeCompare(b.month));
+  const total = Math.round(months.reduce((sum, entry) => sum + entry.amount, 0) * 100) / 100;
   const enteredAt = new Date().toISOString();
 
-  const rows = months.map((month, index) => ({
+  const rows = months.map((entry) => ({
     row_id: ulid(),
     receipt_no: receiptNo,
     academic_year: input.academic_year,
@@ -157,9 +157,9 @@ export async function createPayment(input, user) {
     student_id: input.student_id ?? '',
     student_name: input.student_name,
     parent_name: input.parent_name,
-    month,
-    amount: amounts[index],
-    receipt_total: input.amount,
+    month: entry.month,
+    amount: entry.amount,
+    receipt_total: total,
     payment_date: input.payment_date,
     payment_mode: input.payment_mode,
     remarks: input.remarks ?? '',
@@ -176,6 +176,7 @@ export async function createPayment(input, user) {
   return {
     receipt_no: receiptNo,
     rows,
+    total,
     duplicate_of: alreadyPaid,
   };
 }

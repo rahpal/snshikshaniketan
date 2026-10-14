@@ -124,29 +124,46 @@ test('new users must have a valid username and a real role', () => {
   assert.ok(!createUserSchema.safeParse({ username: 'ok', full_name: 'X Y', role: 'superuser' }).success);
 });
 
-test('payment input accepts several months and rejects nonsense', () => {
+test('payment input carries an amount per month and rejects nonsense', () => {
   const base = {
     academic_year: '2026-27',
     class: '5',
     student_name: 'Arjun Verma',
     parent_name: 'Sunita Verma',
-    months: ['2026-04', '2026-05', '2026-06'],
-    amount: 2400,
+    months: [
+      { month: '2026-04', amount: 800 },
+      { month: '2026-05', amount: 800 },
+      // Months genuinely differ - an exam month, or a part payment.
+      { month: '2026-06', amount: 1200 },
+    ],
     payment_date: '2026-06-10',
     payment_mode: 'upi',
   };
 
   const parsed = paymentSchema.parse(base);
   assert.equal(parsed.months.length, 3);
+  assert.equal(parsed.months[2].amount, 1200);
   assert.equal(parsed.remarks, '');
   assert.equal(parsed.allow_duplicate, false);
 
   assert.ok(!paymentSchema.safeParse({ ...base, months: [] }).success);
-  const duplicated = paymentSchema.safeParse({ ...base, months: ['2026-04', '2026-04'] });
+
+  const duplicated = paymentSchema.safeParse({
+    ...base,
+    months: [
+      { month: '2026-04', amount: 800 },
+      { month: '2026-04', amount: 800 },
+    ],
+  });
   assert.ok(!duplicated.success);
   assert.match(duplicated.error.issues[0].message, /same month/);
-  assert.ok(!paymentSchema.safeParse({ ...base, amount: 0 }).success);
-  assert.ok(!paymentSchema.safeParse({ ...base, amount: -100 }).success);
+
+  // Every month needs its own amount, and it has to be a real one.
+  assert.ok(!paymentSchema.safeParse({ ...base, months: [{ month: '2026-04' }] }).success);
+  assert.ok(!paymentSchema.safeParse({ ...base, months: [{ month: '2026-04', amount: 0 }] }).success);
+  assert.ok(!paymentSchema.safeParse({ ...base, months: [{ month: '2026-04', amount: -100 }] }).success);
+  assert.ok(!paymentSchema.safeParse({ ...base, months: [{ month: '2026-13', amount: 800 }] }).success);
+
   assert.ok(!paymentSchema.safeParse({ ...base, payment_date: '10-06-2026' }).success);
   assert.ok(!paymentSchema.safeParse({ ...base, payment_mode: 'crypto' }).success);
   assert.ok(!paymentSchema.safeParse({ ...base, academic_year: '2026' }).success);

@@ -22,7 +22,7 @@ export default handler('POST', async (req, res) => {
   // Every month on a receipt has to belong to the academic year it is filed
   // under, or it would be invisible in that year's class-wise view.
   const valid = new Set(monthsOf(input.academic_year));
-  const stray = input.months.filter((month) => !valid.has(month));
+  const stray = input.months.map((entry) => entry.month).filter((month) => !valid.has(month));
   if (stray.length > 0) {
     throw badRequest(`${stray.join(', ')} ${stray.length === 1 ? 'is' : 'are'} not part of ${input.academic_year}.`, {
       months: `Choose months between April ${input.academic_year.slice(0, 4)} and March.`,
@@ -68,7 +68,7 @@ export default handler('POST', async (req, res) => {
       student: input.student_name,
       class: input.class,
       months: input.months,
-      amount: input.amount,
+      amount: result.total,
       mode: input.payment_mode,
       ...(result.duplicate_of.length > 0 ? { overrode_duplicate: result.duplicate_of } : {}),
     },
@@ -80,6 +80,6 @@ export default handler('POST', async (req, res) => {
     student_id: student.student_id,
     student_added: studentAdded,
     months: result.rows.map((row) => ({ month: row.month, amount: row.amount })),
-    total: input.amount,
+    total: result.total,
   });
 });

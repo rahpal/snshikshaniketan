@@ -5,10 +5,11 @@ import { useLanguage } from '../context/LanguageContext.jsx';
 import { ApiError, api } from '../lib/api.js';
 import { academicYearOf, academicYearOptions, monthLabel } from '../../shared/academic-year.js';
 import { CLASSES, PAYMENT_MODE_LABELS, classLabel } from '../../shared/school.js';
-import { allocateAmount, formatInr } from '../../shared/money.js';
+import { formatInr, usualMonthlyAmount } from '../../shared/money.js';
 import Alert from '../components/ui/Alert.jsx';
 import Button from '../components/ui/Button.jsx';
 import Field from '../components/ui/Field.jsx';
+import AmountEntry from '../components/AmountEntry.jsx';
 import MonthPicker from '../components/MonthPicker.jsx';
 import Spinner from '../components/ui/Spinner.jsx';
 
@@ -32,6 +33,11 @@ export default function CollectPayment() {
   const [parentName, setParentName] = useState('');
   const [months, setMonths] = useState([]);
   const [amount, setAmount] = useState('');
+  // Whether the amount on screen is the class's usual figure or one someone
+  // typed. Without this, clearing the box would snap the pre-fill back.
+  const [amountTouched, setAmountTouched] = useState(false);
+  const [perMonth, setPerMonth] = useState(false);
+  const [amounts, setAmounts] = useState({});
   const [paymentDate, setPaymentDate] = useState(todayIso);
   const [paymentMode, setPaymentMode] = useState('cash');
   const [remarks, setRemarks] = useState('');
@@ -93,15 +99,38 @@ export default function CollectPayment() {
     return map;
   }, [payments, studentId, isNewStudent, selectedStudent]);
 
-  const split = useMemo(() => {
-    const total = Number.parseFloat(amount);
-    if (!Number.isFinite(total) || total <= 0 || months.length < 2) return null;
-    return allocateAmount(total, months.length);
-  }, [amount, months.length]);
+  /** What this class usually pays, taken from what has actually been collected. */
+  const usual = useMemo(() => usualMonthlyAmount(payments), [payments]);
+
+  // The pre-fill is derived, not stored: until someone types, the box shows the
+  // class's usual figure, and each class brings its own.
+  const shownAmount = amountTouched ? amount : usual !== null ? String(usual) : '';
+
+  function changeAmount(value) {
+    setAmountTouched(true);
+    setAmount(value);
+  }
+
+  /** Switching to per-month seeds every month with whatever is already shown. */
+  function changeMode(next) {
+    if (next) {
+      setAmounts(Object.fromEntries(months.map((month) => [month, amounts[month] ?? shownAmount])));
+    }
+    setPerMonth(next);
+  }
+
+  /** The months and amounts exactly as they will be stored. */
+  function monthsWithAmounts() {
+    return months.map((month) => ({
+      month,
+      amount: Number.parseFloat(perMonth ? amounts[month] : shownAmount),
+    }));
+  }
 
   function chooseStudent(value) {
     setStudentId(value);
     setMonths([]);
+    setAmounts({});
     setDuplicate(null);
     const student = students.find((candidate) => candidate.student_id === value);
     setStudentName(student?.student_name ?? '');
@@ -114,6 +143,10 @@ export default function CollectPayment() {
     setStudentName('');
     setParentName('');
     setMonths([]);
+    setAmounts({});
+    // A new class has its own usual figure, so let it pre-fill again.
+    setAmount('');
+    setAmountTouched(false);
     setDuplicate(null);
   }
 
@@ -126,6 +159,12 @@ export default function CollectPayment() {
       return;
     }
 
+    const entries = monthsWithAmounts();
+    if (entries.some((entry) => !Number.isFinite(entry.amount) || entry.amount <= 0)) {
+      setFieldErrors({ months: t('collect.amountRequired') });
+      return;
+    }
+
     setSubmitting(true);
     try {
       const result = await api.post('/api/payments/create', {
@@ -134,8 +173,7 @@ export default function CollectPayment() {
         student_id: isNewStudent ? '' : studentId,
         student_name: studentName,
         parent_name: parentName,
-        months,
-        amount: Number.parseFloat(amount),
+        months: entries,
         payment_date: paymentDate,
         payment_mode: paymentMode,
         remarks,
@@ -285,6 +323,9 @@ export default function CollectPayment() {
                 onChange={(next) => {
                   setMonths(next);
                   setDuplicate(null);
+                  if (perMonth) {
+                    setAmounts(Object.fromEntries(next.map((month) => [month, amounts[month] ?? shownAmount])));
+                  }
                 }}
                 disabled={submitting}
               />
@@ -295,23 +336,21 @@ export default function CollectPayment() {
               )}
             </div>
 
+            <AmountEntry
+              months={months}
+              className={className}
+              perMonth={perMonth}
+              amount={shownAmount}
+              amounts={amounts}
+              usual={usual}
+              errors={fieldErrors}
+              onAmountChange={changeAmount}
+              onAmountsChange={setAmounts}
+              onModeChange={changeMode}
+              disabled={submitting}
+            />
+
             <div className="grid gap-4 sm:grid-cols-2">
-              <Field
-                label={t('collect.amount')}
-                type="number"
-                inputMode="decimal"
-                min="1"
-                step="0.01"
-                value={amount}
-                onChange={(event) => setAmount(event.target.value)}
-                error={fieldErrors.amount}
-                hint={
-                  split
-                    ? `${t('collect.perMonth')} ${split.map((part) => formatInr(part)).join(' + ')}`
-                    : t('collect.amountHint')
-                }
-                required
-              />
               <Field
                 label={t('collect.date')}
                 type="date"
@@ -321,9 +360,6 @@ export default function CollectPayment() {
                 error={fieldErrors.payment_date}
                 required
               />
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
               <Field
                 label={t('collect.mode')}
                 as="select"
@@ -337,14 +373,15 @@ export default function CollectPayment() {
                   </option>
                 ))}
               </Field>
-              <Field
-                label={t('collect.remarks')}
-                value={remarks}
-                onChange={(event) => setRemarks(event.target.value)}
-                error={fieldErrors.remarks}
-                hint={t('collect.remarksHint')}
-              />
             </div>
+
+            <Field
+              label={t('collect.remarks')}
+              value={remarks}
+              onChange={(event) => setRemarks(event.target.value)}
+              error={fieldErrors.remarks}
+              hint={t('collect.remarksHint')}
+            />
 
             <Button type="submit" size="lg" className="w-full" disabled={submitting}>
               <BanknoteArrowUp className="h-4 w-4" aria-hidden="true" />

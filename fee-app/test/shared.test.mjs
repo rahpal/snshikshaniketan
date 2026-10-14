@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { allocateAmount, formatInr } from '../shared/money.js';
+import { formatInr, sumAmounts, usualMonthlyAmount } from '../shared/money.js';
 import { parseCsv, parseCsvRecords } from '../shared/csv.js';
 import { CLASSES, classLabel, isKnownClass } from '../shared/school.js';
 
@@ -15,23 +15,39 @@ test('the class list is the school\'s own, in register order', () => {
   assert.ok(!isKnownClass(''));
 });
 
-test('a receipt total splits across months and always adds back up', () => {
-  assert.deepEqual(allocateAmount(2400, 3), [800, 800, 800]);
-  assert.deepEqual(allocateAmount(1000, 3), [333.34, 333.33, 333.33]);
-  assert.deepEqual(allocateAmount(500, 1), [500]);
+test('month amounts sum without floating-point dust', () => {
+  assert.equal(sumAmounts([800, 800, 800]), 2400);
+  assert.equal(sumAmounts([333.33, 333.33, 333.34]), 1000);
+  // Adding these as plain floats gives 999.9899999999999.
+  assert.equal(sumAmounts([333.33, 333.33, 333.33]), 999.99);
+  assert.equal(sumAmounts([]), 0);
+  assert.equal(sumAmounts([0.1, 0.2]), 0.3);
+  assert.equal(sumAmounts([800, '', null]), 800);
+});
 
-  // Whatever the split, the parts must sum to exactly what was collected.
-  for (const total of [1000, 1234.56, 999.99, 7, 0.03]) {
-    for (let count = 1; count <= 12; count += 1) {
-      const parts = allocateAmount(total, count);
-      assert.equal(parts.length, count);
-      const sum = Math.round(parts.reduce((a, b) => a + b, 0) * 100) / 100;
-      assert.equal(sum, total, `${total} over ${count} months summed to ${sum}`);
-    }
-  }
+test('the usual monthly amount is the one a class pays most often', () => {
+  const payments = [
+    { amount: 800, entered_at: '2026-04-05T10:00:00Z' },
+    { amount: 800, entered_at: '2026-05-05T10:00:00Z' },
+    // One exam month must not become everyone's default.
+    { amount: 1200, entered_at: '2026-06-05T10:00:00Z' },
+  ];
+  assert.equal(usualMonthlyAmount(payments), 800);
 
-  assert.throws(() => allocateAmount(100, 0));
-  assert.throws(() => allocateAmount(Number.NaN, 2));
+  // A tie goes to whichever was collected most recently, so a fee rise takes
+  // over once it is as common as the old figure.
+  assert.equal(
+    usualMonthlyAmount([
+      { amount: 800, entered_at: '2026-04-05T10:00:00Z' },
+      { amount: 900, entered_at: '2026-07-05T10:00:00Z' },
+    ]),
+    900
+  );
+
+  // Nothing to go on, or nothing usable, means no pre-fill rather than a guess.
+  assert.equal(usualMonthlyAmount([]), null);
+  assert.equal(usualMonthlyAmount(undefined), null);
+  assert.equal(usualMonthlyAmount([{ amount: 0 }, { amount: '' }, { amount: -5 }]), null);
 });
 
 test('amounts are shown in Indian digit grouping', () => {

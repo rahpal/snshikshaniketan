@@ -59,6 +59,23 @@ export const classNameSchema = trimmed(30, 'Class')
   .transform((value) => value.toUpperCase())
   .refine(isKnownClass, `Class must be one of: ${CLASSES.join(', ')}.`);
 
+/**
+ * One month and what was paid against it.
+ *
+ * The amount belongs to the month rather than to the receipt, because months
+ * genuinely differ - an exam month costs more, a part payment covers less. A
+ * single receipt total divided by the number of months would invent per-month
+ * figures that nobody entered, and those figures are exactly what the
+ * class-wise view reports.
+ */
+export const paidMonthSchema = z.object({
+  month: monthKeySchema,
+  amount: z
+    .number({ message: 'Enter an amount for every month.' })
+    .positive('Each amount must be more than zero.')
+    .max(100000, 'That amount looks too large. Please check it.'),
+});
+
 export const paymentSchema = z.object({
   academic_year: academicYearSchema,
   class: classNameSchema,
@@ -67,14 +84,17 @@ export const paymentSchema = z.object({
   student_name: trimmed(80, 'Student name').min(2, 'Student name is required.'),
   parent_name: trimmed(80, 'Parent name').min(2, 'Parent name is required.'),
   months: z
-    .array(monthKeySchema)
+    .array(paidMonthSchema)
     .min(1, 'Select at least one month.')
     .max(12, 'A single receipt cannot cover more than 12 months.')
-    .refine((months) => new Set(months).size === months.length, 'The same month is selected twice.'),
-  amount: z
-    .number({ message: 'Amount is required.' })
-    .positive('Amount must be more than zero.')
-    .max(1000000, 'Amount looks too large. Please check it.'),
+    .refine(
+      (months) => new Set(months.map((entry) => entry.month)).size === months.length,
+      'The same month appears twice.'
+    )
+    .refine(
+      (months) => months.reduce((sum, entry) => sum + entry.amount, 0) <= 1000000,
+      'The total looks too large. Please check the amounts.'
+    ),
   payment_date: z
     .string({ message: 'Payment date is required.' })
     .regex(/^\d{4}-\d{2}-\d{2}$/, 'Payment date must look like 2026-04-14.'),

@@ -1,26 +1,40 @@
 /**
- * Money handling. Amounts are rupees, but arithmetic happens in paise: a
- * receipt for three months at 1/3 of 1000 must still add back up to exactly
- * 1000, which floating-point rupees do not guarantee.
+ * Money handling. Totals are summed in paise, because adding rupees as floats
+ * leaves a receipt for 3 x 333.33 reading 999.9899999999999.
  */
+
+/** Sums month amounts without floating-point dust. */
+export function sumAmounts(amounts) {
+  const paise = amounts.reduce((total, amount) => total + Math.round((Number(amount) || 0) * 100), 0);
+  return paise / 100;
+}
 
 /**
- * Splits a receipt total across its months. Earlier months absorb the
- * remainder, so the parts always sum to the total exactly.
+ * What this class usually pays in a month, worked out from what has actually
+ * been collected.
+ *
+ * It pre-fills the amount on the form, which gives the convenience of a
+ * fee-per-class table with nothing to set up or keep in step - and it follows
+ * the fee by itself when it changes. The most common figure wins rather than
+ * the most recent, so one unusual month (an exam, a part payment) does not
+ * become everybody's default; the newest wins a tie.
  */
-export function allocateAmount(total, count) {
-  if (!Number.isFinite(total)) throw new Error('allocateAmount needs a finite total');
-  if (!Number.isInteger(count) || count < 1) throw new Error('allocateAmount needs at least one part');
+export function usualMonthlyAmount(payments) {
+  const seen = new Map();
 
-  const totalPaise = Math.round(total * 100);
-  const basePaise = Math.floor(totalPaise / count);
-  let remainder = totalPaise - basePaise * count;
+  for (const payment of payments ?? []) {
+    const amount = Number(payment?.amount);
+    if (!Number.isFinite(amount) || amount <= 0) continue;
+    const entry = seen.get(amount) ?? { count: 0, latest: '' };
+    const at = String(payment.entered_at ?? '');
+    seen.set(amount, { count: entry.count + 1, latest: at > entry.latest ? at : entry.latest });
+  }
 
-  return Array.from({ length: count }, () => {
-    const extra = remainder > 0 ? 1 : 0;
-    remainder -= extra;
-    return (basePaise + extra) / 100;
-  });
+  if (seen.size === 0) return null;
+
+  return [...seen.entries()].sort(
+    ([, a], [, b]) => b.count - a.count || b.latest.localeCompare(a.latest)
+  )[0][0];
 }
 
 const INR = new Intl.NumberFormat('en-IN', {

@@ -18,6 +18,11 @@ The app lives in [`fee-app/`](../../fee-app/). Setup instructions are in
 real handlers against an in-memory fake of the Sheets API, so `npm test` needs
 no credentials.
 
+**Open question:** when a month costs more because of an exam or admission fee, the
+amount is recorded as the higher monthly figure, with the reason in Remarks. Itemising it
+as a separate charge line would allow reporting tuition separately from other collections;
+it can be added later without disturbing anything already recorded.
+
 **Settled with the school:** the spreadsheet is owned by `bkpal161@gmail.com`;
 classes are NUR, KG and 1–8 with **no sections**; the first administrator is
 `bkpal` (BK Pal); the student list exists already and is loaded by CSV import;
@@ -215,9 +220,10 @@ Related additions, all small, that make it usable in practice:
   "Arjun has already paid for June (receipt SNS-2627-0041) — continue anyway?".
 - **Receipt number + printable receipt.** Parents expect one: A5 print view with the
   school logo, shareable as a PDF or screenshot on WhatsApp.
-- **Partial payments & concessions.** `amount` is pre-filled from `FeeStructure` but fully
-  editable, and `concession_pct` on a student adjusts the expected figure so a scholarship
-  student is not flagged as a defaulter.
+- **Months that cost different amounts.** Each month on a receipt stores the amount
+  entered against it, so an exam month, a part payment or a mid-year fee change is
+  recorded as what it was rather than averaged away. `concession_pct` on a student adjusts
+  the expected figure so a scholarship student is not flagged as a defaulter.
 - **Defaulters report.** Every student with an unpaid month up to the current month, with
   parent contact — the thing the office actually needs printed.
 - **Hindi + English** labels, matching the public site's bilingual approach.
@@ -299,8 +305,14 @@ Fields, in entry order:
    the roster, so a payment is never blocked by missing data.
 4. **Months paid** — Apr–Mar checkbox grid. Already-paid months are pre-marked and
    disabled; the next unpaid month is pre-selected. Multiple selection is the normal case.
-5. **Amount paid** — auto-computed as `months × monthly_fee − concession`, fully editable
-   for partial payments; shows the per-month split when overridden.
+5. **Amount, per month** — one box, pre-filled with the amount this class most commonly
+   pays, worked out from what has actually been collected, so there is no fee table to
+   maintain. A link, *"Different amount for some months?"*, opens a box per month seeded
+   with that figure, for an exam month, a part payment, or a fee that changed mid-year; a
+   month differing from the usual figure is flagged amber as a prompt to check, never as a
+   blocker. The total is shown prominently and is always the sum of the months — it is
+   never typed, and the app never divides a total, because dividing invents per-month
+   figures that nobody entered and that the class-wise view would then report.
 6. **Payment date** — defaults to today, cannot be in the future.
 7. **Payment mode** — cash / UPI / cheque / bank transfer.
 8. **Remarks** — free text.

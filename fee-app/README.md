@@ -23,8 +23,8 @@ Phases 0, 1 and 2 of the plan:
   that
 - Admin and operator roles, enforced on the server for every request
 - **Recording a fee payment** covering any number of months on one receipt,
-  with the amount split across them, a duplicate-payment guard, and a printable
-  receipt
+  with its own amount against each month, a duplicate-payment guard, and a
+  printable receipt
 - **The student list**: CSV import, add one at a time, and automatic addition of
   anyone a payment is recorded for
 - The spreadsheet bootstrap script, which creates the five tabs and the first
@@ -38,8 +38,14 @@ navigation and are marked "Soon".
 ### The school's setup
 
 Classes are NUR, KG and 1 to 8, with no sections, as configured in
-`shared/school.js`. There is no fee-per-class table yet, so staff type the
-amount on each entry; adding one later changes only what the form pre-fills.
+`shared/school.js`. There is no fee-per-class table. Instead the form pre-fills
+the amount a class most commonly pays, worked out from what has actually been
+collected, so the figure follows the fee by itself with nothing to maintain.
+
+Amounts are entered **per month**, not as a total to be divided. One box covers
+the usual case; a link opens a box per month when one of them differs - an exam
+month, a part payment, a fee that changed mid-year. The receipt total is always
+the sum of the months, and is never typed.
 
 ## Running it locally
 
