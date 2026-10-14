@@ -1,7 +1,7 @@
 # Tuition Fee Repository — Implementation Plan
 
 S.N.S. Shiksha Niketan · internal fee-collection app
-Status: **Phases 0, 1 and 2 built** · Branch: `claude/tuition-fee-app-7ip94f`
+Status: **Phases 0-4 built** · Branch: `claude/tuition-fee-app-7ip94f`
 
 | Phase | State |
 | --- | --- |
@@ -9,12 +9,12 @@ Status: **Phases 0, 1 and 2 built** · Branch: `claude/tuition-fee-app-7ip94f`
 | 1 — Authentication, roles, forced password change, lockout | **done** |
 | 2 — Payment entry form, receipt, student list with CSV import | **done** |
 | 3 — Class-wise view, student record, pending fees | **done** |
-| 4 — Admin: users, fee structure, void/edit, audit | not started |
+| 4 — Admin: accounts, fee structure, void/correct, activity log | **done** |
 | 5 — Hardening and handover | not started |
 
 The app lives in [`fee-app/`](../../fee-app/). Setup instructions are in
 [`fee-app/docs/SETUP.md`](../../fee-app/docs/SETUP.md); credential handling is in
-[`fee-app/docs/SECURITY.md`](../../fee-app/docs/SECURITY.md). 68 tests run the
+[`fee-app/docs/SECURITY.md`](../../fee-app/docs/SECURITY.md). 117 tests run the
 real handlers against an in-memory fake of the Sheets API, so `npm test` needs
 no credentials.
 
@@ -289,7 +289,7 @@ Routes are at the app's own root (it has its own hostname), not under a `/fees` 
 | `/structure` | admin | Per-class monthly fee. |
 | `/users` | admin | Create user, set role, reset password, deactivate. |
 | `/audit` | admin | Audit log, newest first. |
-| `/payments/:receiptNo/edit` | admin | Correct or void a receipt; reason required. |
+| the receipt itself | admin | **Correct the details** (date, how it was paid, remarks) and **Cancel this receipt** (reason required) sit on the receipt, where the thing being corrected is in front of you. Amounts and months are never editable: putting those right means cancelling and recording again, so both halves stay in the register. |
 
 Operators see admin routes neither in the nav nor on direct URL entry (route guard), and
 the API refuses them regardless.
