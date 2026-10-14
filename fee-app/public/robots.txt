@@ -1,0 +1,3 @@
+# Internal staff application. Nothing here should ever be indexed.
+User-agent: *
+Disallow: /

@@ -1,0 +1,35 @@
+@import "tailwindcss";
+
+/* Class-based dark mode, matching how the public site does it. */
+@variant dark (&:where(.dark, .dark *));
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-slate-100 text-slate-900 antialiased dark:bg-slate-950 dark:text-slate-100;
+}
+
+/* Inputs get one shared look so every form in the app matches. */
+.field-input {
+  @apply w-full rounded-lg border border-slate-300 bg-white px-3 py-2 text-slate-900 shadow-sm
+    outline-none transition
+    placeholder:text-slate-400
+    focus:border-blue-500 focus:ring-2 focus:ring-blue-500/30
+    disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-500
+    dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100
+    dark:placeholder:text-slate-500 dark:disabled:bg-slate-800;
+}
+
+.card {
+  @apply rounded-xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900;
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+}

@@ -1,7 +1,22 @@
 # Tuition Fee Repository — Implementation Plan
 
 S.N.S. Shiksha Niketan · internal fee-collection app
-Status: **plan / awaiting approval** · Branch: `claude/tuition-fee-app-7ip94f`
+Status: **Phases 0 and 1 built** · Branch: `claude/tuition-fee-app-7ip94f`
+
+| Phase | State |
+| --- | --- |
+| 0 — Scaffold, Sheets layer, bootstrap script, docs | **done** |
+| 1 — Authentication, roles, forced password change, lockout | **done** |
+| 2 — Payment entry form | not started |
+| 3 — Class-wise view, ledger, defaulters | not started |
+| 4 — Admin: users, roster, fee structure, void/edit, audit | not started |
+| 5 — Hardening and handover | not started |
+
+The app lives in [`fee-app/`](../../fee-app/). Setup instructions are in
+[`fee-app/docs/SETUP.md`](../../fee-app/docs/SETUP.md); credential handling is in
+[`fee-app/docs/SECURITY.md`](../../fee-app/docs/SECURITY.md). 44 tests cover the
+auth layer and the spreadsheet layer against an in-memory fake of the Sheets
+API, so `npm test` needs no credentials.
 
 ---
 
@@ -70,7 +85,7 @@ Browser (fee-app React SPA)
         │  fetch() with httpOnly session cookie
         ▼
 Vercel Serverless Functions  (fee-app/api/*)   ← secrets live only here
-        │  googleapis + service-account JWT
+        │  service-account JWT -> Sheets REST API
         ▼
 Google Spreadsheet  (owned by the school's Gmail account)
    tabs: Users · Students · Payments · FeeStructure · AuditLog
@@ -308,6 +323,10 @@ Each phase ends in a working, deployable state and a commit on
   `vercel.json` with API-safe rewrites and `noindex` headers, `robots.txt`.
 - `fee-app/api/_lib/`: Sheets client, header-mapped row read/write helpers, session
   sign/verify, `requireAuth`/`requireAdmin` guards, zod schemas, audit writer.
+- Dependencies kept deliberately small: `jose`, `bcryptjs`, `zod`. The
+  service-account token exchange is ~40 lines against the REST API rather than
+  the `googleapis` client, which cuts the function bundle (and so cold-start
+  latency) and routes every call through `fetch`, so tests can intercept it.
 - `fee-app/scripts/bootstrap-sheet.mjs`: creates all five tabs with headers, protections,
   and the first admin user.
 - `fee-app/README.md` + `docs/SETUP.md`: step-by-step Google Cloud, service account,

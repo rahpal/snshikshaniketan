@@ -1,0 +1,23 @@
+node_modules
+dist
+dist-ssr
+
+# Secrets - never commit these
+.env
+.env.*
+!.env.example
+*.local
+
+# Vercel
+.vercel
+
+# Logs
+logs
+*.log
+npm-debug.log*
+
+# Editor
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
