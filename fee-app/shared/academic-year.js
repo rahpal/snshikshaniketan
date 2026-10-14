@@ -1,3 +1,5 @@
+import { SCHOOL_TIMEZONE } from './school.js';
+
 /**
  * The school year runs April to March, so "2026-27" starts in April 2026 and
  * its months must be ordered Apr -> Mar. Treating the year as Jan-Dec would
@@ -83,4 +85,22 @@ export function monthStanding(monthKey, referenceIsoDate) {
   if (monthKey < reference) return 'overdue';
   if (monthKey === reference) return 'current';
   return 'advance';
+}
+
+const SCHOOL_DAY = new Intl.DateTimeFormat('en-CA', {
+  timeZone: SCHOOL_TIMEZONE,
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+});
+
+/**
+ * Today where the school is, as YYYY-MM-DD.
+ *
+ * Used for the payment date's default and its upper limit, on both sides: the
+ * browser's own clock could be set to anything, and the server's is UTC, so
+ * neither is a safe answer to "what day is it at the school".
+ */
+export function todayAtSchool(now = new Date()) {
+  return SCHOOL_DAY.format(now);
 }

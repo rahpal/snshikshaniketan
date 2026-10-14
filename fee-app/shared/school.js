@@ -29,6 +29,13 @@ export function isKnownClass(name) {
  */
 export const SECTIONS_ENABLED = false;
 
+/**
+ * Where the school is. Dates are judged against the day here, not the day
+ * wherever a server happens to run: at 8pm UTC it is already tomorrow in
+ * Kolkata, so a UTC comparison would refuse a perfectly ordinary evening entry.
+ */
+export const SCHOOL_TIMEZONE = 'Asia/Kolkata';
+
 export const PAYMENT_MODE_LABELS = {
   cash: 'Cash',
   upi: 'UPI',

@@ -155,3 +155,15 @@ test('a month is read as arrears, current or advance against the payment date', 
   assert.equal(monthKeyOf(new Date(2026, 9, 14)), '2026-10');
   assert.equal(monthKeyOf(new Date(2027, 0, 3)), '2027-01');
 });
+
+test("the school's today is the school's, not the server's", async () => {
+  const { todayAtSchool } = await import('../shared/academic-year.js');
+
+  assert.match(todayAtSchool(), /^\d{4}-\d{2}-\d{2}$/);
+  // 20:30 UTC is already the next day in Kolkata. A server comparing against
+  // its own UTC day would refuse an ordinary evening entry.
+  assert.equal(todayAtSchool(new Date('2026-10-14T20:30:00Z')), '2026-10-15');
+  assert.equal(todayAtSchool(new Date('2026-10-14T04:30:00Z')), '2026-10-14');
+  // Just before midnight IST is still the same day there.
+  assert.equal(todayAtSchool(new Date('2026-10-14T18:29:00Z')), '2026-10-14');
+});

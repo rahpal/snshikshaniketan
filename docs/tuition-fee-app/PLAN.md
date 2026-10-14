@@ -322,7 +322,13 @@ Fields, in entry order:
    blocker. The total is shown prominently and is always the sum of the months — it is
    never typed, and the app never divides a total, because dividing invents per-month
    figures that nobody entered and that the class-wise view would then report.
-6. **Payment date** — defaults to today, cannot be in the future.
+6. **Payment date** — the day the parent handed the money over. Opens already set to
+   today, so the common case needs no thought, but stays editable because the office often
+   records on Monday what was paid on Saturday. It cannot be in the future, enforced on the
+   server and not merely capped in the browser, and "today" means today at the school
+   rather than wherever a server runs — at 8pm UTC it is already tomorrow in Kolkata.
+   Recorded separately from `entered_at`, the untouchable timestamp of when the row was
+   written, so a backdated entry still shows when it was actually typed and by whom.
 7. **Payment mode** — cash / UPI / cheque / bank transfer.
 8. **Remarks** — free text.
 9. **Entered by** — taken from the session, never typed.

@@ -426,3 +426,43 @@ test('students are listed by class, in name order', async () => {
     );
   });
 });
+
+test('a payment cannot be dated in the future, whatever the browser allowed', async () => {
+  await withSheet(async (sheet) => {
+    const cookie = await signedIn();
+    const { todayAtSchool } = await import('../shared/academic-year.js');
+
+    const today = todayAtSchool();
+    const tomorrow = new Date(`${today}T12:00:00Z`);
+    tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
+
+    // The form caps the date, so this is someone bypassing it.
+    const future = await pay(cookie, { payment_date: tomorrow.toISOString().slice(0, 10) });
+    assert.equal(future.status, 400);
+    assert.match(future.json.details.payment_date, /future/);
+    assert.equal(sheet.objects(TABS.PAYMENTS).length, 0, 'nothing should have been written');
+
+    // Today is fine, and so is a date in the past: the office often records a
+    // payment a day or two after it was handed over.
+    assert.equal((await pay(cookie, { payment_date: today })).status, 200);
+    assert.equal((await pay(cookie, { months: [{ month: '2026-07', amount: 800 }], payment_date: '2026-06-10' })).status, 200);
+  });
+});
+
+test('the entry timestamp is the server\'s and ignores anything sent for it', async () => {
+  await withSheet(async (sheet) => {
+    const cookie = await signedIn();
+    const before = new Date().toISOString();
+
+    // A client trying to dictate when the row was written gets nowhere: the
+    // field is not part of the accepted input at all.
+    await pay(cookie, { entered_at: '2020-01-01T00:00:00.000Z', entered_by: 'someone-else' });
+
+    const [row] = sheet.objects(TABS.PAYMENTS);
+    assert.ok(row.entered_at >= before, 'entered_at should be set when the row was written');
+    assert.ok(row.entered_at <= new Date().toISOString());
+    assert.equal(row.entered_by, 'operator', 'entered_by comes from the session');
+    // The payment date is the one the form sent; the two are separate records.
+    assert.equal(row.payment_date, '2026-06-10');
+  });
+});

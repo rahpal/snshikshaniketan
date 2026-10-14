@@ -3,7 +3,14 @@ import { useNavigate } from 'react-router-dom';
 import { BanknoteArrowUp } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import { ApiError, api } from '../lib/api.js';
-import { academicYearOf, academicYearOptions, monthLabel, monthStanding, monthsOf } from '../../shared/academic-year.js';
+import {
+  academicYearOf,
+  academicYearOptions,
+  monthLabel,
+  monthStanding,
+  monthsOf,
+  todayAtSchool,
+} from '../../shared/academic-year.js';
 import { CLASSES, PAYMENT_MODE_LABELS, classLabel } from '../../shared/school.js';
 import { formatInr, usualMonthlyAmount } from '../../shared/money.js';
 import Alert from '../components/ui/Alert.jsx';
@@ -14,13 +21,6 @@ import MonthPicker from '../components/MonthPicker.jsx';
 import Spinner from '../components/ui/Spinner.jsx';
 
 const NEW_STUDENT = '__new__';
-
-/** Today in the local timezone, as the date input wants it. */
-function todayIso() {
-  const now = new Date();
-  const offset = now.getTimezoneOffset() * 60000;
-  return new Date(now.getTime() - offset).toISOString().slice(0, 10);
-}
 
 export default function CollectPayment() {
   const { t } = useLanguage();
@@ -38,7 +38,7 @@ export default function CollectPayment() {
   const [amountTouched, setAmountTouched] = useState(false);
   const [perMonth, setPerMonth] = useState(false);
   const [amounts, setAmounts] = useState({});
-  const [paymentDate, setPaymentDate] = useState(todayIso);
+  const [paymentDate, setPaymentDate] = useState(todayAtSchool);
   const [paymentMode, setPaymentMode] = useState('cash');
   const [remarks, setRemarks] = useState('');
 
@@ -397,7 +397,7 @@ export default function CollectPayment() {
               <Field
                 label={t('collect.date')}
                 type="date"
-                max={todayIso()}
+                max={todayAtSchool()}
                 value={paymentDate}
                 onChange={(event) => setPaymentDate(event.target.value)}
                 error={fieldErrors.payment_date}

@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import { isAcademicYear, isMonthKey } from '../../shared/academic-year.js';
+import { isAcademicYear, isMonthKey, todayAtSchool } from '../../shared/academic-year.js';
 import { PAYMENT_MODES, ROLES } from './sheet-schema.js';
 import { PASSWORD_MIN_LENGTH } from './password.js';
 import { CLASSES, isKnownClass } from '../../shared/school.js';
@@ -97,7 +97,13 @@ export const paymentSchema = z.object({
     ),
   payment_date: z
     .string({ message: 'Payment date is required.' })
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Payment date must look like 2026-04-14.'),
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Payment date must look like 2026-04-14.')
+    // The form caps the date too, but a browser hint is not a control on money
+    // data: money cannot be received on a day that has not happened.
+    .refine(
+      (date) => date <= todayAtSchool(),
+      'A payment cannot be dated in the future. Check the payment date.'
+    ),
   payment_mode: z.enum(PAYMENT_MODES, { message: 'Choose how the fee was paid.' }),
   remarks: trimmed(300, 'Remarks').optional().default(''),
   allow_duplicate: z.boolean().optional().default(false),
