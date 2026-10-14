@@ -1,7 +1,7 @@
 import { PAYMENT_STATUS, TABS } from './sheet-schema.js';
-import { appendObjects, asNumber, asText, readTable } from './table.js';
+import { appendObjects, asNumber, asText, readTable, updateRows } from './table.js';
 import { shortId, ulid } from './ulid.js';
-import { conflict } from './errors.js';
+import { conflict, notFound } from './errors.js';
 
 const TAB = TABS.PAYMENTS;
 
@@ -179,4 +179,70 @@ export async function createPayment(input, user) {
     total,
     duplicate_of: alreadyPaid,
   };
+}
+
+/** Every stored row of one receipt, for a change that must cover all of them. */
+async function receiptRows(receiptNo) {
+  const rows = await listPayments({ receipt_no: receiptNo, includeVoided: true, fresh: true });
+  if (rows.length === 0) throw notFound(`No receipt numbered ${receiptNo}.`);
+  return rows;
+}
+
+/**
+ * Cancels a receipt, every month of it, with a reason.
+ *
+ * Nothing is deleted. A void and its replacement both stay in the register, so
+ * the money that was taken and the correction that followed can both be seen -
+ * which is the point of keeping a register at all.
+ */
+export async function voidReceipt(receiptNo, { reason, by }) {
+  const rows = await receiptRows(receiptNo);
+  if (rows.every((row) => row.status === PAYMENT_STATUS.VOID)) {
+    throw conflict(`Receipt ${receiptNo} has already been cancelled.`);
+  }
+
+  const voidedAt = new Date().toISOString();
+  await updateRows(
+    TAB,
+    rows.map((row) => ({
+      rowNumber: row._row,
+      patch: {
+        status: PAYMENT_STATUS.VOID,
+        voided_by: by,
+        voided_at: voidedAt,
+        void_reason: reason,
+      },
+    }))
+  );
+
+  return {
+    receipt_no: receiptNo,
+    months: rows.map((row) => row.month).sort(),
+    total: rows.reduce((sum, row) => sum + row.amount, 0),
+  };
+}
+
+/**
+ * Corrects the details around a payment - when it was handed over, how, and
+ * the remarks. The amounts and months are deliberately not touchable here.
+ */
+export async function updateReceiptDetails(receiptNo, patch) {
+  const rows = await receiptRows(receiptNo);
+  if (rows.every((row) => row.status === PAYMENT_STATUS.VOID)) {
+    throw conflict(`Receipt ${receiptNo} has been cancelled and can no longer be changed.`);
+  }
+
+  const fields = {};
+  if (patch.payment_date !== undefined) fields.payment_date = patch.payment_date;
+  if (patch.payment_mode !== undefined) fields.payment_mode = patch.payment_mode;
+  if (patch.remarks !== undefined) fields.remarks = patch.remarks;
+
+  const before = {
+    payment_date: rows[0].payment_date,
+    payment_mode: rows[0].payment_mode,
+    remarks: rows[0].remarks,
+  };
+
+  await updateRows(TAB, rows.map((row) => ({ rowNumber: row._row, patch: fields })));
+  return { academic_year: rows[0].academic_year, before, after: { ...before, ...fields } };
 }

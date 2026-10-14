@@ -622,3 +622,224 @@ test('one student can be looked up by id for their ledger', async () => {
     assert.equal(response.json.students[0].student_name, 'Arjun Verma');
   });
 });
+
+// ---- correcting a payment -------------------------------------------------
+
+test('an admin can cancel a receipt, with a reason, and it leaves the totals', async () => {
+  await withSheet(async (sheet) => {
+    const operator = await signedIn('operator');
+    const created = await pay(operator);
+    const admin = await signedIn('admin');
+
+    const { default: voidPayment } = await import('../api/payments/void.js');
+    const response = await invoke(voidPayment, {
+      method: 'POST',
+      cookie: admin,
+      body: { receipt_no: created.json.receipt_no, reason: 'Entered twice by mistake' },
+    });
+
+    assert.equal(response.status, 200);
+    assert.equal(response.json.total, 2400);
+
+    // Every month of the receipt is cancelled, and nothing is deleted.
+    const rows = sheet.objects(TABS.PAYMENTS);
+    assert.equal(rows.length, 3, 'the rows stay in the register');
+    assert.ok(rows.every((row) => row.status === 'void'));
+    assert.ok(rows.every((row) => row.void_reason === 'Entered twice by mistake'));
+    assert.ok(rows.every((row) => row.voided_by === 'admin'));
+    assert.ok(rows.every((row) => row.voided_at));
+
+    // It no longer counts as paid, so the months are owed again.
+    const listed = await invoke(listPayments, { cookie: admin, url: `/api/payments/list?academic_year=${YEAR}` });
+    assert.equal(listed.json.payments.length, 0);
+
+    const { default: classwise } = await import('../api/reports/classwise.js');
+    const report = await invoke(classwise, { cookie: admin, url: `/api/reports/classwise?academic_year=${YEAR}` });
+    assert.equal(report.json.totals.collected, 0);
+  });
+});
+
+test('a cancelled month can be recorded again without a duplicate warning', async () => {
+  await withSheet(async () => {
+    const admin = await signedIn('admin');
+    const created = await pay(admin);
+
+    const { default: voidPayment } = await import('../api/payments/void.js');
+    await invoke(voidPayment, {
+      method: 'POST',
+      cookie: admin,
+      body: { receipt_no: created.json.receipt_no, reason: 'Wrong amount entered' },
+    });
+
+    // The correction path: void, then record it properly.
+    const again = await pay(admin, {
+      months: [
+        { month: '2026-04', amount: 900 },
+        { month: '2026-05', amount: 900 },
+        { month: '2026-06', amount: 900 },
+      ],
+    });
+    assert.equal(again.status, 200, 'the cancelled months must not block the re-entry');
+    assert.equal(again.json.total, 2700);
+  });
+});
+
+test('an operator cannot cancel or change a payment', async () => {
+  await withSheet(async () => {
+    const operator = await signedIn('operator');
+    const created = await pay(operator);
+
+    const { default: voidPayment } = await import('../api/payments/void.js');
+    const { default: updatePayment } = await import('../api/payments/update.js');
+
+    const voided = await invoke(voidPayment, {
+      method: 'POST',
+      cookie: operator,
+      body: { receipt_no: created.json.receipt_no, reason: 'Changed my mind' },
+    });
+    assert.equal(voided.status, 403);
+    assert.equal(voided.json.code, 'admin_only');
+
+    const changed = await invoke(updatePayment, {
+      method: 'POST',
+      cookie: operator,
+      body: { receipt_no: created.json.receipt_no, remarks: 'edited' },
+    });
+    assert.equal(changed.status, 403);
+  });
+});
+
+test('a void needs a real reason, and cannot be done twice', async () => {
+  await withSheet(async () => {
+    const admin = await signedIn('admin');
+    const created = await pay(admin);
+    const { default: voidPayment } = await import('../api/payments/void.js');
+
+    const noReason = await invoke(voidPayment, {
+      method: 'POST',
+      cookie: admin,
+      body: { receipt_no: created.json.receipt_no, reason: 'x' },
+    });
+    assert.equal(noReason.status, 400);
+    assert.ok(noReason.json.details.reason);
+
+    const missing = await invoke(voidPayment, {
+      method: 'POST',
+      cookie: admin,
+      body: { receipt_no: 'SNS-202627-NOPE11', reason: 'Does not exist' },
+    });
+    assert.equal(missing.status, 404);
+
+    const body = { receipt_no: created.json.receipt_no, reason: 'Entered twice' };
+    assert.equal((await invoke(voidPayment, { method: 'POST', cookie: admin, body })).status, 200);
+    const again = await invoke(voidPayment, { method: 'POST', cookie: admin, body });
+    assert.equal(again.status, 409);
+  });
+});
+
+test('the details around a payment can be corrected, but never the money', async () => {
+  await withSheet(async (sheet) => {
+    const admin = await signedIn('admin');
+    const created = await pay(admin);
+    const { default: updatePayment } = await import('../api/payments/update.js');
+
+    const response = await invoke(updatePayment, {
+      method: 'POST',
+      cookie: admin,
+      body: {
+        receipt_no: created.json.receipt_no,
+        payment_date: '2026-06-12',
+        payment_mode: 'cheque',
+        remarks: 'cheque no. 112233',
+        // Sent in the hope of changing the money. The schema does not take it.
+        amount: 99999,
+        months: [{ month: '2026-12', amount: 99999 }],
+      },
+    });
+
+    assert.equal(response.status, 200);
+    const rows = sheet.objects(TABS.PAYMENTS);
+    assert.ok(rows.every((row) => row.payment_date === '2026-06-12'));
+    assert.ok(rows.every((row) => row.payment_mode === 'cheque'));
+    assert.ok(rows.every((row) => row.remarks === 'cheque no. 112233'));
+
+    // The money and the months are exactly as recorded.
+    assert.deepEqual(rows.map((row) => Number(row.amount)), [800, 800, 800]);
+    assert.deepEqual(rows.map((row) => row.month).sort(), ['2026-04', '2026-05', '2026-06']);
+    assert.ok(rows.every((row) => Number(row.receipt_total) === 2400));
+  });
+});
+
+test('a corrected date obeys the same rules as a recorded one', async () => {
+  await withSheet(async () => {
+    const admin = await signedIn('admin');
+    const created = await pay(admin);
+    const { default: updatePayment } = await import('../api/payments/update.js');
+
+    const change = (payment_date) =>
+      invoke(updatePayment, {
+        method: 'POST',
+        cookie: admin,
+        body: { receipt_no: created.json.receipt_no, payment_date },
+      });
+
+    // Before the academic year, and in the future, are refused here too.
+    assert.equal((await change('2025-06-10')).status, 400);
+    assert.equal((await change('2030-01-01')).status, 400);
+    assert.equal((await change('2026-05-05')).status, 200);
+  });
+});
+
+test('a cancelled receipt cannot then be edited', async () => {
+  await withSheet(async () => {
+    const admin = await signedIn('admin');
+    const created = await pay(admin);
+    const { default: voidPayment } = await import('../api/payments/void.js');
+    const { default: updatePayment } = await import('../api/payments/update.js');
+
+    await invoke(voidPayment, {
+      method: 'POST',
+      cookie: admin,
+      body: { receipt_no: created.json.receipt_no, reason: 'Entered twice' },
+    });
+
+    const response = await invoke(updatePayment, {
+      method: 'POST',
+      cookie: admin,
+      body: { receipt_no: created.json.receipt_no, remarks: 'still fiddling' },
+    });
+    assert.equal(response.status, 409);
+  });
+});
+
+test('cancelling and correcting are both written to the audit log', async () => {
+  await withSheet(async (sheet) => {
+    const admin = await signedIn('admin');
+    const created = await pay(admin);
+    const { default: voidPayment } = await import('../api/payments/void.js');
+    const { default: updatePayment } = await import('../api/payments/update.js');
+
+    await invoke(updatePayment, {
+      method: 'POST',
+      cookie: admin,
+      body: { receipt_no: created.json.receipt_no, remarks: 'corrected' },
+    });
+    await invoke(voidPayment, {
+      method: 'POST',
+      cookie: admin,
+      body: { receipt_no: created.json.receipt_no, reason: 'Recorded against the wrong child' },
+    });
+
+    const entries = sheet.objects(TABS.AUDIT_LOG);
+    const update = entries.find((entry) => entry.action === 'payment.update');
+    const voided = entries.find((entry) => entry.action === 'payment.void');
+
+    assert.ok(update, 'the correction should be logged');
+    assert.ok(update.before.includes('paid at office'), 'what it was');
+    assert.ok(update.after.includes('corrected'), 'what it became');
+
+    assert.ok(voided, 'the cancellation should be logged');
+    assert.equal(voided.entity_id, created.json.receipt_no);
+    assert.ok(voided.after.includes('wrong child'));
+  });
+});

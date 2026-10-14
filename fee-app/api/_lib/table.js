@@ -1,5 +1,5 @@
 import { getEnv } from './env.js';
-import { appendValues, getValues, updateValues } from './google.js';
+import { appendValues, batchUpdateValues, getValues, updateValues } from './google.js';
 import { HEADERS } from './sheet-schema.js';
 
 /**
@@ -116,6 +116,38 @@ export async function updateRow(tab, rowNumber, patch) {
   const merged = { ...existing, ...patch };
   const lastColumn = columnLetter(headers.length - 1);
   await updateValues(`${tab}!A${rowNumber}:${lastColumn}${rowNumber}`, [toRowArray(headers, merged)]);
+  invalidate(tab);
+  return merged;
+}
+
+/**
+ * Patches several rows of one tab in a single request.
+ *
+ * Used where a change spans rows that belong together - the months of one
+ * receipt - so they cannot end up half-updated.
+ */
+export async function updateRows(tab, patches) {
+  if (patches.length === 0) return [];
+
+  const { headers, rows } = await readTable(tab, { fresh: true });
+  const lastColumn = columnLetter(headers.length - 1);
+  const byRow = new Map(rows.map((row) => [row._row, row]));
+
+  const data = [];
+  const merged = [];
+  for (const { rowNumber, patch } of patches) {
+    const existing = byRow.get(rowNumber);
+    if (!existing) throw new Error(`Tab "${tab}" has no row ${rowNumber} to update.`);
+    const next = { ...existing, ...patch };
+    merged.push(next);
+    data.push({
+      range: `${tab}!A${rowNumber}:${lastColumn}${rowNumber}`,
+      majorDimension: 'ROWS',
+      values: [toRowArray(headers, next)],
+    });
+  }
+
+  await batchUpdateValues(data);
   invalidate(tab);
   return merged;
 }

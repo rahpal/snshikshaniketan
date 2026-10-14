@@ -175,6 +175,11 @@ export class FakeSpreadsheet {
     return { spreadsheetId: SHEET_ID, updatedRows: values.length };
   }
 
+  batchUpdateValues(body) {
+    for (const entry of body.data ?? []) this.update(entry.range, entry.values);
+    return { spreadsheetId: SHEET_ID, totalUpdatedSheets: 1 };
+  }
+
   batchUpdate(body) {
     this.batchUpdates.push(body);
     for (const request of body.requests ?? []) {
@@ -221,6 +226,10 @@ export function installFetch(spreadsheet) {
       }
       if (method === 'POST' && path.startsWith(':batchUpdate')) {
         return reply(200, spreadsheet.batchUpdate(body));
+      }
+
+      if (method === 'POST' && path.startsWith('/values:batchUpdate')) {
+        return reply(200, spreadsheet.batchUpdateValues(body));
       }
 
       const valuesMatch = path.match(/^\/values\/([^?:]+)(:append)?/);

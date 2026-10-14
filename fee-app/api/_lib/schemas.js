@@ -1,11 +1,5 @@
 import { z } from 'zod';
-import {
-  earliestPaymentDateFor,
-  isAcademicYear,
-  isMonthKey,
-  monthLabel,
-  todayAtSchool,
-} from '../../shared/academic-year.js';
+import { isAcademicYear, isMonthKey, paymentDateProblem } from '../../shared/academic-year.js';
 import { PAYMENT_MODES, ROLES } from './sheet-schema.js';
 import { PASSWORD_MIN_LENGTH } from './password.js';
 import { CLASSES, isKnownClass } from '../../shared/school.js';
@@ -101,37 +95,17 @@ export const paymentSchema = z.object({
       (months) => months.reduce((sum, entry) => sum + entry.amount, 0) <= 1000000,
       'The total looks too large. Please check the amounts.'
     ),
-  payment_date: z
-    .string({ message: 'Payment date is required.' })
-    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Payment date must look like 2026-04-14.')
-    // The form caps the date too, but a browser hint is not a control on money
-    // data: money cannot be received on a day that has not happened.
-    .refine(
-      (date) => date <= todayAtSchool(),
-      'A payment cannot be dated in the future. Check the payment date.'
-    ),
+  // The rules themselves live in paymentDateProblem, applied below, because
+  // one of them depends on the academic year this receipt is filed under.
+  payment_date: z.string({ message: 'Payment date is required.' }),
   payment_mode: z.enum(PAYMENT_MODES, { message: 'Choose how the fee was paid.' }),
   remarks: trimmed(300, 'Remarks').optional().default(''),
   allow_duplicate: z.boolean().optional().default(false),
 }).superRefine((payment, ctx) => {
-  // zod runs this even when a field above it failed, so a malformed academic
-  // year would reach the helper below and throw - turning a clean 400 into a
-  // 500. The field has already reported itself; nothing to add here.
-  if (!isAcademicYear(payment.academic_year)) return;
-
-  // Cross-field, so it cannot live on the date alone: the date is judged
-  // against the year the receipt is filed under. Either field could be the
-  // typo, so the message names both.
-  const earliest = earliestPaymentDateFor(payment.academic_year);
-  if (payment.payment_date < earliest) {
-    ctx.addIssue({
-      code: 'custom',
-      path: ['payment_date'],
-      message:
-        `A payment for ${payment.academic_year} cannot be dated before ` +
-        `${monthLabel(earliest.slice(0, 7))}. Check the academic year and the payment date.`,
-    });
-  }
+  // Cross-field: the date is judged against the year the receipt is filed
+  // under, so it cannot be checked on the field alone.
+  const problem = paymentDateProblem(payment.payment_date, payment.academic_year);
+  if (problem) ctx.addIssue({ code: 'custom', path: ['payment_date'], message: problem });
 });
 
 export const studentNameSchema = trimmed(80, 'Student name')
@@ -173,4 +147,52 @@ export const listQuerySchema = z.object({
   academic_year: academicYearSchema.optional(),
   class: classNameSchema.optional(),
   student_id: trimmed(40, 'Student').optional(),
+});
+
+export const userIdSchema = z.object({
+  user_id: trimmed(40, 'User').min(1, 'User is required.'),
+});
+
+export const updateUserSchema = z.object({
+  user_id: trimmed(40, 'User').min(1, 'User is required.'),
+  role: z.enum([ROLES.ADMIN, ROLES.OPERATOR]).optional(),
+  active: z.boolean().optional(),
+});
+
+export const receiptNoSchema = trimmed(40, 'Receipt number').min(1, 'Receipt number is required.');
+
+export const voidPaymentSchema = z.object({
+  receipt_no: receiptNoSchema,
+  // Required, and not a tick-box: the reason is the whole point of a void, and
+  // it is what the register has to be able to explain a year later.
+  reason: trimmed(200, 'Reason')
+    .min(4, 'Give a short reason, so the correction can be understood later.'),
+});
+
+/**
+ * Only the details around a payment may be corrected. The amounts and the
+ * months are what the money actually was, so putting those right means voiding
+ * the receipt and recording it again - which leaves both halves visible.
+ */
+export const updatePaymentSchema = z
+  .object({
+    receipt_no: receiptNoSchema,
+    payment_date: z.string().optional(),
+    payment_mode: z.enum(PAYMENT_MODES).optional(),
+    remarks: trimmed(300, 'Remarks').optional(),
+  })
+  .refine(
+    (patch) =>
+      patch.payment_date !== undefined || patch.payment_mode !== undefined || patch.remarks !== undefined,
+    'Nothing to change.'
+  );
+
+export const setFeeSchema = z.object({
+  academic_year: academicYearSchema,
+  class: classNameSchema,
+  monthly_fee: z
+    .number({ message: 'Monthly fee is required.' })
+    .positive('The monthly fee must be more than zero.')
+    .max(100000, 'That fee looks too large. Please check it.'),
+  notes: trimmed(200, 'Notes').optional(),
 });

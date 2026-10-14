@@ -45,6 +45,7 @@ export default function CollectPayment() {
 
   const [students, setStudents] = useState([]);
   const [payments, setPayments] = useState([]);
+  const [fees, setFees] = useState([]);
   const [loadingClass, setLoadingClass] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
@@ -65,13 +66,15 @@ export default function CollectPayment() {
       setLoadingClass(true);
       const query = `academic_year=${encodeURIComponent(academicYear)}&class=${encodeURIComponent(className)}`;
       try {
-        const [roster, paid] = await Promise.all([
+        const [roster, paid, feeList] = await Promise.all([
           api.get(`/api/students/list?${query}`),
           api.get(`/api/payments/list?${query}`),
+          api.get(`/api/fees/list?academic_year=${encodeURIComponent(academicYear)}`),
         ]);
         if (cancelled) return;
         setStudents(roster.students);
         setPayments(paid.payments);
+        setFees(feeList.fees);
       } catch (caught) {
         if (!cancelled) setError(caught.message);
       } finally {
@@ -119,8 +122,19 @@ export default function CollectPayment() {
   const payingAhead = months.some((month) => monthStanding(month, paymentDate) === 'advance');
   const showArrears = payingAhead && unpaidArrears.length > 0;
 
-  /** What this class usually pays, taken from what has actually been collected. */
-  const usual = useMemo(() => usualMonthlyAmount(payments), [payments]);
+  /**
+   * What to put in the amount box.
+   *
+   * A fee set for the class wins, because somebody chose it deliberately.
+   * Otherwise it falls back to what the class most commonly pays, so the form
+   * is useful before any fee has been configured - and may never need one.
+   */
+  const configuredFee = useMemo(
+    () => fees.find((fee) => fee.class === className)?.monthly_fee ?? null,
+    [fees, className]
+  );
+  const inferred = useMemo(() => usualMonthlyAmount(payments), [payments]);
+  const usual = configuredFee ?? inferred;
 
   // The pre-fill is derived, not stored: until someone types, the box shows the
   // class's usual figure, and each class brings its own.
@@ -387,6 +401,7 @@ export default function CollectPayment() {
               amount={shownAmount}
               amounts={amounts}
               usual={usual}
+              usualIsConfigured={configuredFee !== null}
               errors={fieldErrors}
               onAmountChange={changeAmount}
               onAmountsChange={setAmounts}

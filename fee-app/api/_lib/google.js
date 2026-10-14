@@ -147,6 +147,20 @@ export async function updateValues(range, values) {
   });
 }
 
+/**
+ * Writes several ranges in one request.
+ *
+ * Voiding a receipt touches a row per month, and a dozen separate calls would
+ * be both slow and only half-applied if one of them failed.
+ */
+export async function batchUpdateValues(data) {
+  if (data.length === 0) return {};
+  return request('/values:batchUpdate', {
+    method: 'POST',
+    body: { valueInputOption: 'RAW', data },
+  });
+}
+
 /** Structural changes: adding tabs, freezing rows, protecting ranges. */
 export async function batchUpdate(requests) {
   return request(':batchUpdate', { method: 'POST', body: { requests } });

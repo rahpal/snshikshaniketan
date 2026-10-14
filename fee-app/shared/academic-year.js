@@ -121,3 +121,25 @@ export function earliestPaymentDateFor(academicYear) {
   // One month before April, the month the session starts.
   return `${startYear}-03-01`;
 }
+
+/**
+ * Why this payment date is not acceptable for this academic year, or null if
+ * it is. Shared by recording a payment and correcting one, so the two can
+ * never disagree about the rules.
+ */
+export function paymentDateProblem(date, academicYear) {
+  const value = String(date ?? '');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return 'Payment date must look like 2026-04-14.';
+  if (value > todayAtSchool()) return 'A payment cannot be dated in the future. Check the payment date.';
+  // Nothing to say when the year itself is malformed; it reports itself.
+  if (!isAcademicYear(academicYear)) return null;
+
+  const earliest = earliestPaymentDateFor(academicYear);
+  if (value < earliest) {
+    return (
+      `A payment for ${academicYear} cannot be dated before ` +
+      `${monthLabel(earliest.slice(0, 7))}. Check the academic year and the payment date.`
+    );
+  }
+  return null;
+}

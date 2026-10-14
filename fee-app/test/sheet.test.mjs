@@ -216,3 +216,33 @@ test('bootstrap adds a column that a later version introduced, without disturbin
     assert.deepEqual(await verifySchema(), []);
   });
 });
+
+test('several rows are patched in one request, leaving the rest alone', async () => {
+  const sheet = new FakeSpreadsheet();
+  const { updateRows } = await import('../api/_lib/table.js');
+
+  await withSheet(sheet, async () => {
+    await appendObjects(TABS.FEE_STRUCTURE, [
+      { academic_year: '2026-27', class: '5', monthly_fee: 800, effective_from: '2026-04-01', notes: 'keep' },
+      { academic_year: '2026-27', class: '6', monthly_fee: 850, effective_from: '2026-04-01', notes: 'keep too' },
+      { academic_year: '2026-27', class: '7', monthly_fee: 900, effective_from: '2026-04-01', notes: 'untouched' },
+    ]);
+
+    const merged = await updateRows(TABS.FEE_STRUCTURE, [
+      { rowNumber: 2, patch: { monthly_fee: 1000 } },
+      { rowNumber: 3, patch: { monthly_fee: 1100 } },
+    ]);
+
+    assert.equal(merged.length, 2);
+    const rows = sheet.objects(TABS.FEE_STRUCTURE);
+    assert.equal(Number(rows[0].monthly_fee), 1000);
+    assert.equal(rows[0].notes, 'keep', 'other columns of a patched row survive');
+    assert.equal(Number(rows[1].monthly_fee), 1100);
+    assert.equal(Number(rows[2].monthly_fee), 900, 'rows not named are untouched');
+
+    await assert.rejects(
+      () => updateRows(TABS.FEE_STRUCTURE, [{ rowNumber: 99, patch: { monthly_fee: 1 } }]),
+      /no row 99/
+    );
+  });
+});

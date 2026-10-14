@@ -170,9 +170,20 @@ on the list adds them automatically.
 
 ## 7. Add the rest of the staff
 
-Administrators create accounts from the Users screen, which is Phase 4. Until
-that exists, the bootstrap script only creates administrators — so wait for
-Phase 4 rather than giving the office an admin login.
+Open **Users** and choose **Add a user**. Give the office **Data entry**, not
+Administrator: data entry can see everything and record payments, but cannot
+change an entry after the fact, which is the point of the two roles.
+
+The screen shows a temporary password once. Hand it over in person and close
+the box — it is not stored anywhere in readable form and cannot be shown again.
+They will be made to choose their own password at first sign-in. If it is lost,
+use **Reset password**, which also clears a lockout and signs that person out
+everywhere.
+
+Some things the screen will not let you do, on purpose: you cannot switch off
+or demote your own account, and you cannot remove the last administrator —
+either would lock everyone out of an app whose only other way in is running a
+script against the spreadsheet.
 
 ---
 

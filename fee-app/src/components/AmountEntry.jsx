@@ -24,6 +24,7 @@ export default function AmountEntry({
   amount,
   amounts,
   usual,
+  usualIsConfigured = false,
   errors = {},
   onAmountChange,
   onAmountsChange,
@@ -127,7 +128,7 @@ export default function AmountEntry({
           error={errors.months}
           hint={
             usual !== null
-              ? t('collect.usualHint')
+              ? t(usualIsConfigured ? 'collect.feeHint' : 'collect.usualHint')
                   .replace('{class}', classLabel(className))
                   .replace('{amount}', formatInr(usual))
               : t('collect.amountHint')

@@ -11,6 +11,9 @@ import Roster from './pages/Roster.jsx';
 import ClassWise from './pages/ClassWise.jsx';
 import Pending from './pages/Pending.jsx';
 import StudentLedger from './pages/StudentLedger.jsx';
+import UsersPage from './pages/Users.jsx';
+import FeeStructure from './pages/FeeStructure.jsx';
+import ActivityLog from './pages/ActivityLog.jsx';
 import ComingSoon from './pages/ComingSoon.jsx';
 import NotFound from './pages/NotFound.jsx';
 
@@ -49,6 +52,9 @@ export default function App() {
 
           <Route element={<RequireAdmin />}>
             <Route path="roster" element={<Roster />} />
+            <Route path="users" element={<UsersPage />} />
+            <Route path="structure" element={<FeeStructure />} />
+            <Route path="audit" element={<ActivityLog />} />
             {adminPlaceholders.map(({ path, labelKey }) => (
               <Route key={path} path={path} element={<ComingSoon titleKey={labelKey} />} />
             ))}

@@ -33,19 +33,24 @@ Phases 0, 1 and 2 of the plan:
 - **Pending fees**: who owes what, worst first, with parent contacts, printable
 - **A student's own record**: every receipt for the year, with months and
   amounts
+- **Accounts**: an administrator creates staff logins, issues and resets
+  passwords, changes roles and switches accounts off
+- **Corrections**: an administrator can cancel a receipt with a reason, or fix
+  the details around a payment. The amounts and months are never editable
+- **Fee structure** (optional) and the **activity log**
 - The spreadsheet bootstrap script, which creates the five tabs and the first
   administrator
 - English and Hindi, light and dark, and a layout that works on a phone
 
-User management, the fee structure and the activity log are Phase 4. Their
-screens exist in the navigation and are marked "Soon".
+That is all five phases of the plan.
 
 ### The school's setup
 
 Classes are NUR, KG and 1 to 8, with no sections, as configured in
-`shared/school.js`. There is no fee-per-class table. Instead the form pre-fills
-the amount a class most commonly pays, worked out from what has actually been
-collected, so the figure follows the fee by itself with nothing to maintain.
+`shared/school.js`. A fee per class can be set on the Fee structure screen but
+does not have to be: with nothing set, the form pre-fills the amount a class
+most commonly pays, worked out from what has actually been collected, so the
+figure follows the fee by itself with nothing to maintain.
 
 One deposit can clear **arrears** and pay **in advance** at the same time: every
 month in the grid shows whether it is due, is this month, or is ahead, there is

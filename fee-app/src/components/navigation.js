@@ -23,9 +23,9 @@ export const NAV_ITEMS = [
   { path: '/classwise', labelKey: 'nav.classwise', icon: CalendarCheck, adminOnly: false, ready: true },
   { path: '/defaulters', labelKey: 'nav.defaulters', icon: ClipboardList, adminOnly: false, ready: true },
   { path: '/roster', labelKey: 'nav.roster', icon: UsersRound, adminOnly: true, ready: true },
-  { path: '/structure', labelKey: 'nav.structure', icon: IndianRupee, adminOnly: true, ready: false },
-  { path: '/users', labelKey: 'nav.users', icon: Users, adminOnly: true, ready: false },
-  { path: '/audit', labelKey: 'nav.audit', icon: ScrollText, adminOnly: true, ready: false },
+  { path: '/structure', labelKey: 'nav.structure', icon: IndianRupee, adminOnly: true, ready: true },
+  { path: '/users', labelKey: 'nav.users', icon: Users, adminOnly: true, ready: true },
+  { path: '/audit', labelKey: 'nav.audit', icon: ScrollText, adminOnly: true, ready: true },
 ];
 
 export function visibleNavItems(isAdmin) {
