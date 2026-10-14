@@ -104,3 +104,20 @@ const SCHOOL_DAY = new Intl.DateTimeFormat('en-CA', {
 export function todayAtSchool(now = new Date()) {
   return SCHOOL_DAY.format(now);
 }
+
+/**
+ * The earliest a payment filed under an academic year may be dated.
+ *
+ * The session starts in April, but fees for it are routinely collected in the
+ * weeks before - an admission deposit, or April paid early - so the bound sits
+ * one month ahead of the start rather than on it. Refusing a genuine March
+ * payment would only push the office into entering a false date.
+ *
+ * Its job is catching a mistyped year: a 2026-27 receipt dated 2025-06-10 is
+ * a year out, and that is what this stops.
+ */
+export function earliestPaymentDateFor(academicYear) {
+  const startYear = academicYearStartYear(academicYear);
+  // One month before April, the month the session starts.
+  return `${startYear}-03-01`;
+}

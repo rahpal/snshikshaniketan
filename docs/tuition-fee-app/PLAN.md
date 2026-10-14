@@ -327,6 +327,13 @@ Fields, in entry order:
    records on Monday what was paid on Saturday. It cannot be in the future, enforced on the
    server and not merely capped in the browser, and "today" means today at the school
    rather than wherever a server runs — at 8pm UTC it is already tomorrow in Kolkata.
+   It also cannot predate the academic year it is filed under: for 2026-27, nothing before
+   1 March 2026. The bound sits a month ahead of the April start rather than on it, because
+   fees for a session are routinely collected in the weeks before it begins, and refusing a
+   genuine March payment would only push the office into entering a false date. Its job is
+   catching a mistyped year — a 2026-27 receipt dated 2025-06-10. Clearing an earlier
+   year's dues is unaffected: those are filed under that year, so they are judged against
+   its own start.
    Recorded separately from `entered_at`, the untouchable timestamp of when the row was
    written, so a backdated entry still shows when it was actually typed and by whom.
 7. **Payment mode** — cash / UPI / cheque / bank transfer.

@@ -6,6 +6,7 @@ import { ApiError, api } from '../lib/api.js';
 import {
   academicYearOf,
   academicYearOptions,
+  earliestPaymentDateFor,
   monthLabel,
   monthStanding,
   monthsOf,
@@ -397,6 +398,7 @@ export default function CollectPayment() {
               <Field
                 label={t('collect.date')}
                 type="date"
+                min={earliestPaymentDateFor(academicYear)}
                 max={todayAtSchool()}
                 value={paymentDate}
                 onChange={(event) => setPaymentDate(event.target.value)}

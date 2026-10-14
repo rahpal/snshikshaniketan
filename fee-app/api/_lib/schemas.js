@@ -1,5 +1,11 @@
 import { z } from 'zod';
-import { isAcademicYear, isMonthKey, todayAtSchool } from '../../shared/academic-year.js';
+import {
+  earliestPaymentDateFor,
+  isAcademicYear,
+  isMonthKey,
+  monthLabel,
+  todayAtSchool,
+} from '../../shared/academic-year.js';
 import { PAYMENT_MODES, ROLES } from './sheet-schema.js';
 import { PASSWORD_MIN_LENGTH } from './password.js';
 import { CLASSES, isKnownClass } from '../../shared/school.js';
@@ -107,6 +113,25 @@ export const paymentSchema = z.object({
   payment_mode: z.enum(PAYMENT_MODES, { message: 'Choose how the fee was paid.' }),
   remarks: trimmed(300, 'Remarks').optional().default(''),
   allow_duplicate: z.boolean().optional().default(false),
+}).superRefine((payment, ctx) => {
+  // zod runs this even when a field above it failed, so a malformed academic
+  // year would reach the helper below and throw - turning a clean 400 into a
+  // 500. The field has already reported itself; nothing to add here.
+  if (!isAcademicYear(payment.academic_year)) return;
+
+  // Cross-field, so it cannot live on the date alone: the date is judged
+  // against the year the receipt is filed under. Either field could be the
+  // typo, so the message names both.
+  const earliest = earliestPaymentDateFor(payment.academic_year);
+  if (payment.payment_date < earliest) {
+    ctx.addIssue({
+      code: 'custom',
+      path: ['payment_date'],
+      message:
+        `A payment for ${payment.academic_year} cannot be dated before ` +
+        `${monthLabel(earliest.slice(0, 7))}. Check the academic year and the payment date.`,
+    });
+  }
 });
 
 export const studentNameSchema = trimmed(80, 'Student name')

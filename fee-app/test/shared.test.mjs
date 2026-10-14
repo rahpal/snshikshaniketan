@@ -167,3 +167,13 @@ test("the school's today is the school's, not the server's", async () => {
   // Just before midnight IST is still the same day there.
   assert.equal(todayAtSchool(new Date('2026-10-14T18:29:00Z')), '2026-10-14');
 });
+
+test('a payment may not predate the academic year it is filed under', async () => {
+  const { earliestPaymentDateFor } = await import('../shared/academic-year.js');
+
+  // One month before the April start, so fees collected just before the
+  // session begins are still accepted.
+  assert.equal(earliestPaymentDateFor('2026-27'), '2026-03-01');
+  assert.equal(earliestPaymentDateFor('2025-26'), '2025-03-01');
+  assert.throws(() => earliestPaymentDateFor('2026'));
+});

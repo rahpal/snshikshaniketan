@@ -466,3 +466,66 @@ test('the entry timestamp is the server\'s and ignores anything sent for it', as
     assert.equal(row.payment_date, '2026-06-10');
   });
 });
+
+test('a payment dated before the academic year it is filed under is refused', async () => {
+  await withSheet(async (sheet) => {
+    const cookie = await signedIn();
+
+    // The year typed a digit out: a 2026-27 receipt dated 2025.
+    const mistyped = await pay(cookie, { payment_date: '2025-06-10' });
+    assert.equal(mistyped.status, 400);
+    assert.match(mistyped.json.details.payment_date, /cannot be dated before March 2026/);
+    // The message points at both fields, since either could be the mistake.
+    assert.match(mistyped.json.details.payment_date, /academic year/);
+    assert.equal(sheet.objects(TABS.PAYMENTS).length, 0, 'nothing should have been written');
+
+    assert.equal((await pay(cookie, { payment_date: '2026-02-28' })).status, 400);
+  });
+});
+
+test('fees collected just before the session starts are still accepted', async () => {
+  await withSheet(async () => {
+    const cookie = await signedIn();
+
+    // A parent paying April's fee in March, before the session begins.
+    const early = await pay(cookie, { payment_date: '2026-03-15' });
+    assert.equal(early.status, 200);
+
+    const onTheDay = await pay(cookie, {
+      months: [{ month: '2026-07', amount: 800 }],
+      payment_date: '2026-03-01',
+    });
+    assert.equal(onTheDay.status, 200);
+
+    const sessionStart = await pay(cookie, {
+      months: [{ month: '2026-08', amount: 800 }],
+      payment_date: '2026-04-01',
+    });
+    assert.equal(sessionStart.status, 200);
+  });
+});
+
+test('a late arrears payment for an earlier academic year is still allowed', async () => {
+  await withSheet(async () => {
+    const cookie = await signedIn();
+    // Clearing 2025-26 dues during 2026-27 is normal and must not be blocked.
+    const response = await pay(cookie, {
+      academic_year: '2025-26',
+      months: [{ month: '2025-04', amount: 800 }],
+      payment_date: '2026-06-10',
+    });
+    assert.equal(response.status, 200);
+  });
+});
+
+test('a malformed academic year is a field error, not a server error', async () => {
+  await withSheet(async () => {
+    const cookie = await signedIn();
+    // The date rule is cross-field, so it must not blow up when the year it
+    // depends on is itself invalid.
+    const response = await pay(cookie, { academic_year: '2026' });
+    assert.equal(response.status, 400, 'should be a validation failure, not a 500');
+    assert.equal(response.json.code, 'validation_failed');
+    assert.ok(response.json.details.academic_year);
+  });
+});
