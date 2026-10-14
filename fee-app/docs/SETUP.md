@@ -147,12 +147,32 @@ Sign in as the administrator from step 4. You will be asked to set your own
 password immediately. The dashboard then shows a green "Connected to the fee
 spreadsheet" panel; if it is amber, it names what is wrong.
 
-## 6. Add the rest of the staff
+## 6. Load the student list
 
-Administrators create accounts from the Users screen (Phase 4). Until that
-screen exists, add staff by re-running the bootstrap script per person — but
-note that it only creates an administrator, so wait for Phase 4 rather than
-giving the office an admin login.
+Sign in as the administrator and open **Students**. Choose a CSV file with a
+row per student and these columns — the headings can be written however your
+existing list writes them (`Student Name`, `Name`, `Father's Name`, `Mobile`
+and similar are all recognised):
+
+```csv
+Student Name,Class,Parent Name,Contact
+Arjun Verma,5,Rakesh Verma,9876543210
+Kabir Khan,NUR,Imran Khan,9876500000
+```
+
+Class must be one of `NUR`, `KG`, `1`…`8`. The screen shows what will be
+imported, what is already there, and which rows it cannot read, before anything
+is written. Importing the same file twice adds nothing, so a half-finished
+import can simply be run again.
+
+If no list exists yet, skip this: recording a payment for a student who is not
+on the list adds them automatically.
+
+## 7. Add the rest of the staff
+
+Administrators create accounts from the Users screen, which is Phase 4. Until
+that exists, the bootstrap script only creates administrators — so wait for
+Phase 4 rather than giving the office an admin login.
 
 ---
 

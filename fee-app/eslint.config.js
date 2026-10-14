@@ -27,7 +27,7 @@ export default [
       // Counts an identifier rendered as <Icon /> as used. Without it, a
       // component held in a variable looks unused to no-unused-vars.
       'react/jsx-uses-vars': 'error',
-      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
+      'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]', ignoreRestSiblings: true }],
       'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
     },
   },

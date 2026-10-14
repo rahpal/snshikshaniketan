@@ -14,7 +14,7 @@ it shares nothing with the website except the repository and the logo file.
 
 ## What works today
 
-Phases 0 and 1 of the plan:
+Phases 0, 1 and 2 of the plan:
 
 - Sign-in with a username and password issued by an administrator
 - Sessions as a signed, httpOnly cookie; sign-out; 15-minute lockout after 5
@@ -22,12 +22,24 @@ Phases 0 and 1 of the plan:
 - Forced password change at first sign-in, and a password change screen after
   that
 - Admin and operator roles, enforced on the server for every request
+- **Recording a fee payment** covering any number of months on one receipt,
+  with the amount split across them, a duplicate-payment guard, and a printable
+  receipt
+- **The student list**: CSV import, add one at a time, and automatic addition of
+  anyone a payment is recorded for
 - The spreadsheet bootstrap script, which creates the five tabs and the first
   administrator
 - English and Hindi, light and dark, and a layout that works on a phone
 
-Recording payments, the class-wise view, the student roster and user management
-are Phases 2–4. Their screens exist in the navigation and say so.
+The class-wise view, the pending-fees report, user management, the fee
+structure and the activity log are Phases 3–4. Their screens exist in the
+navigation and are marked "Soon".
+
+### The school's setup
+
+Classes are NUR, KG and 1 to 8, with no sections, as configured in
+`shared/school.js`. There is no fee-per-class table yet, so staff type the
+amount on each entry; adding one later changes only what the form pre-fills.
 
 ## Running it locally
 

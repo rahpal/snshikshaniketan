@@ -1,22 +1,27 @@
 # Tuition Fee Repository — Implementation Plan
 
 S.N.S. Shiksha Niketan · internal fee-collection app
-Status: **Phases 0 and 1 built** · Branch: `claude/tuition-fee-app-7ip94f`
+Status: **Phases 0, 1 and 2 built** · Branch: `claude/tuition-fee-app-7ip94f`
 
 | Phase | State |
 | --- | --- |
 | 0 — Scaffold, Sheets layer, bootstrap script, docs | **done** |
 | 1 — Authentication, roles, forced password change, lockout | **done** |
-| 2 — Payment entry form | not started |
+| 2 — Payment entry form, receipt, student list with CSV import | **done** |
 | 3 — Class-wise view, ledger, defaulters | not started |
-| 4 — Admin: users, roster, fee structure, void/edit, audit | not started |
+| 4 — Admin: users, fee structure, void/edit, audit | not started |
 | 5 — Hardening and handover | not started |
 
 The app lives in [`fee-app/`](../../fee-app/). Setup instructions are in
 [`fee-app/docs/SETUP.md`](../../fee-app/docs/SETUP.md); credential handling is in
-[`fee-app/docs/SECURITY.md`](../../fee-app/docs/SECURITY.md). 44 tests cover the
-auth layer and the spreadsheet layer against an in-memory fake of the Sheets
-API, so `npm test` needs no credentials.
+[`fee-app/docs/SECURITY.md`](../../fee-app/docs/SECURITY.md). 68 tests run the
+real handlers against an in-memory fake of the Sheets API, so `npm test` needs
+no credentials.
+
+**Settled with the school:** the spreadsheet is owned by `bkpal161@gmail.com`;
+classes are NUR, KG and 1–8 with **no sections**; the first administrator is
+`bkpal` (BK Pal); the student list exists already and is loaded by CSV import;
+no fee-per-class table for now, so the amount is typed on each entry.
 
 ---
 

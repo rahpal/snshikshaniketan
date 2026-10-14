@@ -5,6 +5,9 @@ import { NAV_ITEMS } from './components/navigation.js';
 import Login from './pages/Login.jsx';
 import ChangePassword from './pages/ChangePassword.jsx';
 import Dashboard from './pages/Dashboard.jsx';
+import CollectPayment from './pages/CollectPayment.jsx';
+import Receipt from './pages/Receipt.jsx';
+import Roster from './pages/Roster.jsx';
 import ComingSoon from './pages/ComingSoon.jsx';
 import NotFound from './pages/NotFound.jsx';
 
@@ -31,12 +34,15 @@ export default function App() {
 
         <Route element={<AppShell />}>
           <Route index element={<Dashboard />} />
+          <Route path="collect" element={<CollectPayment />} />
+          <Route path="receipt/:receiptNo" element={<Receipt />} />
 
           {sharedPlaceholders.map(({ path, labelKey }) => (
             <Route key={path} path={path} element={<ComingSoon titleKey={labelKey} />} />
           ))}
 
           <Route element={<RequireAdmin />}>
+            <Route path="roster" element={<Roster />} />
             {adminPlaceholders.map(({ path, labelKey }) => (
               <Route key={path} path={path} element={<ComingSoon titleKey={labelKey} />} />
             ))}

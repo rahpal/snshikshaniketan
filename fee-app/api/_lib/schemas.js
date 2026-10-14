@@ -1,7 +1,8 @@
 import { z } from 'zod';
-import { isAcademicYear, isMonthKey } from './academic-year.js';
+import { isAcademicYear, isMonthKey } from '../../shared/academic-year.js';
 import { PAYMENT_MODES, ROLES } from './sheet-schema.js';
 import { PASSWORD_MIN_LENGTH } from './password.js';
+import { CLASSES, isKnownClass } from '../../shared/school.js';
 
 /**
  * Every request body is parsed through one of these before it reaches the
@@ -48,7 +49,15 @@ export const monthKeySchema = z
   .string({ message: 'Month is required.' })
   .refine(isMonthKey, 'Month must look like 2026-04.');
 
-export const classNameSchema = trimmed(30, 'Class').min(1, 'Class is required.');
+/**
+ * Validated against the school's actual class list rather than accepted as free
+ * text, so a typo cannot create a class that the class-wise view will then
+ * report on as if it were real.
+ */
+export const classNameSchema = trimmed(30, 'Class')
+  .min(1, 'Class is required.')
+  .transform((value) => value.toUpperCase())
+  .refine(isKnownClass, `Class must be one of: ${CLASSES.join(', ')}.`);
 
 export const paymentSchema = z.object({
   academic_year: academicYearSchema,
@@ -72,4 +81,45 @@ export const paymentSchema = z.object({
   payment_mode: z.enum(PAYMENT_MODES, { message: 'Choose how the fee was paid.' }),
   remarks: trimmed(300, 'Remarks').optional().default(''),
   allow_duplicate: z.boolean().optional().default(false),
+});
+
+export const studentNameSchema = trimmed(80, 'Student name')
+  .min(2, 'Student name is required.')
+  .transform((value) => value.replace(/\s+/g, ' '));
+
+export const createStudentSchema = z.object({
+  academic_year: academicYearSchema,
+  class: classNameSchema,
+  student_name: studentNameSchema,
+  parent_name: trimmed(80, 'Parent name').optional().default(''),
+  contact: trimmed(20, 'Contact number').optional().default(''),
+  admission_date: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, 'Admission date must look like 2026-04-14.')
+    .optional()
+    .or(z.literal('')),
+  notes: trimmed(200, 'Notes').optional().default(''),
+});
+
+export const importStudentsSchema = z.object({
+  academic_year: academicYearSchema,
+  students: z
+    .array(
+      z.object({
+        student_name: studentNameSchema,
+        class: classNameSchema,
+        parent_name: trimmed(80, 'Parent name').optional().default(''),
+        contact: trimmed(20, 'Contact number').optional().default(''),
+        admission_date: z.string().optional().default(''),
+        notes: trimmed(200, 'Notes').optional().default(''),
+      })
+    )
+    .min(1, 'There are no students to import.')
+    .max(2000, 'Import at most 2000 students at a time.'),
+});
+
+export const listQuerySchema = z.object({
+  academic_year: academicYearSchema.optional(),
+  class: classNameSchema.optional(),
+  student_id: trimmed(40, 'Student').optional(),
 });

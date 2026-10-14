@@ -1,0 +1,181 @@
+import { PAYMENT_STATUS, TABS } from './sheet-schema.js';
+import { appendObjects, asNumber, asText, readTable } from './table.js';
+import { allocateAmount } from '../../shared/money.js';
+import { shortId, ulid } from './ulid.js';
+import { conflict } from './errors.js';
+
+const TAB = TABS.PAYMENTS;
+
+function hydrate(row) {
+  return {
+    _row: row._row,
+    row_id: asText(row.row_id),
+    receipt_no: asText(row.receipt_no),
+    academic_year: asText(row.academic_year),
+    class: asText(row.class).toUpperCase(),
+    section: asText(row.section),
+    student_id: asText(row.student_id),
+    student_name: asText(row.student_name),
+    parent_name: asText(row.parent_name),
+    month: asText(row.month),
+    amount: asNumber(row.amount, 0),
+    receipt_total: asNumber(row.receipt_total, 0),
+    payment_date: asText(row.payment_date),
+    payment_mode: asText(row.payment_mode),
+    remarks: asText(row.remarks),
+    entered_by: asText(row.entered_by),
+    entered_at: asText(row.entered_at),
+    status: asText(row.status) || PAYMENT_STATUS.ACTIVE,
+    voided_by: asText(row.voided_by),
+    voided_at: asText(row.voided_at),
+    void_reason: asText(row.void_reason),
+  };
+}
+
+export async function listPayments({
+  academic_year,
+  className,
+  student_id,
+  receipt_no,
+  includeVoided = false,
+  fresh = false,
+} = {}) {
+  const { rows } = await readTable(TAB, { fresh });
+  return rows
+    .map(hydrate)
+    .filter((payment) => payment.receipt_no)
+    .filter((payment) => (academic_year ? payment.academic_year === academic_year : true))
+    .filter((payment) => (className ? payment.class === String(className).toUpperCase() : true))
+    .filter((payment) => (student_id ? payment.student_id === student_id : true))
+    .filter((payment) => (receipt_no ? payment.receipt_no === receipt_no : true))
+    .filter((payment) => (includeVoided ? true : payment.status === PAYMENT_STATUS.ACTIVE));
+}
+
+/** The rows of one receipt, grouped back into the thing the user submitted. */
+export async function findReceipt(receiptNo, options = {}) {
+  const rows = await listPayments({ receipt_no: receiptNo, includeVoided: true, ...options });
+  if (rows.length === 0) return null;
+
+  const [first] = rows;
+  return {
+    receipt_no: first.receipt_no,
+    academic_year: first.academic_year,
+    class: first.class,
+    section: first.section,
+    student_id: first.student_id,
+    student_name: first.student_name,
+    parent_name: first.parent_name,
+    payment_date: first.payment_date,
+    payment_mode: first.payment_mode,
+    remarks: first.remarks,
+    entered_by: first.entered_by,
+    entered_at: first.entered_at,
+    status: first.status,
+    voided_by: first.voided_by,
+    voided_at: first.voided_at,
+    void_reason: first.void_reason,
+    total: rows.reduce((sum, row) => sum + row.amount, 0),
+    months: rows
+      .map((row) => ({ month: row.month, amount: row.amount }))
+      .sort((a, b) => a.month.localeCompare(b.month)),
+  };
+}
+
+/** Receipts are numbered SNS-2627-XXXXXX: unique without a shared counter. */
+function buildReceiptNumber(academicYear, taken) {
+  const suffix = academicYear.replace('-', '');
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    const candidate = `SNS-${suffix}-${shortId(6)}`;
+    if (!taken.has(candidate)) return candidate;
+  }
+  throw new Error('Could not allocate an unused receipt number.');
+}
+
+/**
+ * Which of the requested months this student has already paid for.
+ *
+ * Matched on the student's id where there is one, and on name within the class
+ * otherwise, so a payment recorded before the student was on the list is still
+ * recognised.
+ */
+export function findAlreadyPaid(existing, { student_id, student_name, className, months }) {
+  const wanted = new Set(months);
+  const nameKey = String(student_name).trim().toLowerCase().replace(/\s+/g, ' ');
+
+  return existing
+    .filter((payment) => {
+      if (!wanted.has(payment.month)) return false;
+      if (student_id && payment.student_id) return payment.student_id === student_id;
+      return (
+        payment.class === String(className).toUpperCase() &&
+        payment.student_name.toLowerCase().replace(/\s+/g, ' ') === nameKey
+      );
+    })
+    .map((payment) => ({ month: payment.month, receipt_no: payment.receipt_no, amount: payment.amount }))
+    .sort((a, b) => a.month.localeCompare(b.month));
+}
+
+/**
+ * Records a payment as one row per month, all sharing a receipt number.
+ *
+ * One row per month is what makes the class-wise view a filter rather than a
+ * parse of a comma-separated list, and it lets a part-payment be seen against
+ * the month it belongs to.
+ */
+export async function createPayment(input, user) {
+  const existing = await listPayments({ academic_year: input.academic_year, fresh: true });
+
+  const alreadyPaid = findAlreadyPaid(existing, {
+    student_id: input.student_id,
+    student_name: input.student_name,
+    className: input.class,
+    months: input.months,
+  });
+
+  if (alreadyPaid.length > 0 && !input.allow_duplicate) {
+    throw conflict(
+      `${input.student_name} already has a payment recorded for ${alreadyPaid.length === 1 ? 'this month' : 'these months'}.`,
+      { already_paid: alreadyPaid }
+    );
+  }
+
+  const receiptNo = buildReceiptNumber(
+    input.academic_year,
+    new Set(existing.map((payment) => payment.receipt_no))
+  );
+
+  const months = [...input.months].sort();
+  const amounts = allocateAmount(input.amount, months.length);
+  const enteredAt = new Date().toISOString();
+
+  const rows = months.map((month, index) => ({
+    row_id: ulid(),
+    receipt_no: receiptNo,
+    academic_year: input.academic_year,
+    class: String(input.class).toUpperCase(),
+    section: input.section ?? '',
+    student_id: input.student_id ?? '',
+    student_name: input.student_name,
+    parent_name: input.parent_name,
+    month,
+    amount: amounts[index],
+    receipt_total: input.amount,
+    payment_date: input.payment_date,
+    payment_mode: input.payment_mode,
+    remarks: input.remarks ?? '',
+    entered_by: user.username,
+    entered_at: enteredAt,
+    status: PAYMENT_STATUS.ACTIVE,
+    voided_by: '',
+    voided_at: '',
+    void_reason: '',
+  }));
+
+  await appendObjects(TAB, rows);
+
+  return {
+    receipt_no: receiptNo,
+    rows,
+    duplicate_of: alreadyPaid,
+  };
+}

@@ -8,7 +8,7 @@ import {
   isMonthKey,
   monthLabel,
   monthsOf,
-} from '../api/_lib/academic-year.js';
+} from '../shared/academic-year.js';
 import { columnLetter, asBool, asNumber, asText } from '../api/_lib/table.js';
 import { shortId, ulid } from '../api/_lib/ulid.js';
 import { describePasswordProblem, generateTempPassword } from '../api/_lib/password.js';
@@ -127,7 +127,7 @@ test('new users must have a valid username and a real role', () => {
 test('payment input accepts several months and rejects nonsense', () => {
   const base = {
     academic_year: '2026-27',
-    class: 'V',
+    class: '5',
     student_name: 'Arjun Verma',
     parent_name: 'Sunita Verma',
     months: ['2026-04', '2026-05', '2026-06'],
@@ -150,4 +150,7 @@ test('payment input accepts several months and rejects nonsense', () => {
   assert.ok(!paymentSchema.safeParse({ ...base, payment_date: '10-06-2026' }).success);
   assert.ok(!paymentSchema.safeParse({ ...base, payment_mode: 'crypto' }).success);
   assert.ok(!paymentSchema.safeParse({ ...base, academic_year: '2026' }).success);
+  // The class list is the school's own, so a class that does not exist is refused.
+  assert.ok(!paymentSchema.safeParse({ ...base, class: 'XI' }).success);
+  assert.equal(paymentSchema.parse({ ...base, class: 'nur' }).class, 'NUR');
 });

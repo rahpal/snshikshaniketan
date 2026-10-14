@@ -17,7 +17,7 @@ import { HEADERS, ROLES, TABS } from '../api/_lib/sheet-schema.js';
 import { columnLetter, verifySchema } from '../api/_lib/table.js';
 import { createUser, listUsers } from '../api/_lib/users.js';
 import { generateTempPassword } from '../api/_lib/password.js';
-import { academicYearOf } from '../api/_lib/academic-year.js';
+import { academicYearOf } from '../shared/academic-year.js';
 import { pathToFileURL } from 'node:url';
 
 function parseArgs(argv) {
