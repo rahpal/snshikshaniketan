@@ -7,10 +7,14 @@ Status: **plan / awaiting approval** · Branch: `claude/tuition-fee-app-7ip94f`
 
 ## 1. Summary
 
-A password-protected section of the existing website (`/fees/*`) where school staff record
-tuition-fee payments and see, per class and per month, which students have paid and which
-have not. Google Sheets remains the system of record; all reads and writes go through
-server-side API functions so that no Google credential ever reaches the browser.
+A **separate, self-contained app** in this repo, living in a new `fee-app/` directory with
+its own `package.json`, build, and Vercel project. Nothing in the existing website is
+touched — not `vercel.json`, not `App.jsx`, not the root `package.json`, not the existing
+workflow. The two apps share a repository and nothing else.
+
+Staff log in, record tuition-fee payments, and see per class and per month which students
+have paid and which have not. Google Sheets is the system of record; all reads and writes
+go through server-side API functions so no Google credential ever reaches the browser.
 
 Two roles:
 
@@ -27,50 +31,109 @@ Two roles:
 
 ---
 
-## 2. Architecture
+## 2. Repository layout
 
 ```
-Browser (React SPA, /fees/*)
+snshikshaniketan/
+├── src/, index.html, vercel.json, package.json   ← existing public site, UNCHANGED
+├── .github/workflows/deploy.yml                  ← existing, UNCHANGED
+├── docs/tuition-fee-app/PLAN.md                  ← this file
+└── fee-app/                                      ← the new app, fully self-contained
+    ├── package.json          own deps, own scripts, own lockfile
+    ├── vite.config.js
+    ├── vercel.json           own rewrites + security headers
+    ├── index.html
+    ├── .gitignore            node_modules, dist, .env*
+    ├── .env.example
+    ├── README.md             setup + run instructions
+    ├── api/                  Vercel serverless functions (the only place secrets exist)
+    │   ├── _lib/             sheets client, session, guards, schemas, audit
+    │   ├── auth/             login, logout, me, change-password
+    │   ├── payments/         create, list, void, update
+    │   ├── students/         list, create, update, import
+    │   └── admin/            users, fee-structure, audit
+    ├── scripts/
+    │   └── bootstrap-sheet.mjs   creates the five tabs + first admin user
+    └── src/                  React app (own Tailwind config, own theme)
+```
+
+Why a top-level `fee-app/` rather than `apps/fee-app/`: the repo root *is* the public
+site, so introducing an `apps/` convention would imply moving the existing app into it —
+which is exactly the change you asked me not to make.
+
+---
+
+## 3. Architecture
+
+```
+Browser (fee-app React SPA)
         │  fetch() with httpOnly session cookie
         ▼
-Vercel Serverless Functions  (/api/fees/*)   ← secrets live only here
+Vercel Serverless Functions  (fee-app/api/*)   ← secrets live only here
         │  googleapis + service-account JWT
         ▼
 Google Spreadsheet  (owned by the school's Gmail account)
    tabs: Users · Students · Payments · FeeStructure · AuditLog
 ```
 
-### Why this shape
+**Why this shape**
 
-- **The browser never holds a Google credential.** A service-account key in frontend code
-  or a "publish sheet to web" link would expose every student's data to anyone who views
-  source. All Sheets access is proxied.
-- **No separate server to run or pay for.** The repo already deploys to Vercel; adding an
-  `api/` directory gets functions for free with the existing workflow.
-- **One codebase.** Reuses the current Tailwind theme, dark mode, and Hindi/English
-  translation context. The `/fees` bundle is lazy-loaded so the public site stays as fast
-  as it is today.
+- **The browser never holds a Google credential.** A service-account key in frontend code,
+  or a "publish sheet to web" link, would expose every student's data to anyone who views
+  source. All Sheets access is proxied through functions.
+- **No server to run or pay for.** Vercel gives the `api/` directory serverless functions
+  with no extra infrastructure.
+- **Separate deployment = separate blast radius.** A bad deploy of the fee app cannot take
+  down the public website, and the public site's build never pulls in `googleapis`.
 
-### Considered and rejected
+**Considered and rejected**
 
-- **Google Apps Script web app** as the backend. Fine security-wise (the code runs as the
-  sheet owner, so there is no key to store), and it is the better choice if the school ever
-  wants to drop Vercel. Rejected as primary because: Apps Script deployments are managed
-  outside the repo, CORS and auth handling are awkward, cold latency is ~1–3 s, and
-  testing is painful. Keeping it as a documented fallback.
-- **Sheets API straight from the browser with OAuth sign-in.** Would force every staff
-  member to have a Google account on the sheet, which contradicts "username and password
-  given by the admin", and gives whoever signs in direct edit rights to the raw sheet.
+- **Google Apps Script web app** as the backend. Security-wise fine (runs as the sheet
+  owner, so there is no key to store) and the better choice if the school ever drops
+  Vercel. Rejected as primary because deployments live outside the repo, CORS and auth are
+  awkward, cold latency is 1–3 s, and it is hard to test. Kept as a documented fallback.
+- **Sheets API straight from the browser with Google sign-in.** Would require every staff
+  member to have a Google account on the sheet, contradicting "username and password given
+  by the admin", and would give whoever signs in direct edit rights to the raw sheet.
 - **A real database (Postgres/Supabase).** Technically better, but the requirement is
-  explicitly Google Sheets — the headmaster/accountant can open it on a phone. Noted as a
-  future migration path; the data model below is normalized enough to port directly.
+  explicitly Google Sheets so the office can open it on a phone. The data model below is
+  normalized enough to port later without rework.
+
+**The cost of separation, stated honestly:** the fee app does not reuse the public site's
+`ThemeContext`, `LanguageContext`, or UI components. That means re-establishing Tailwind
+and a dark-mode toggle in the new app (~40 lines, copied not imported) and its own small
+set of translation strings. In exchange, neither app can break the other. Given this is
+internal staff software with a completely different layout from a marketing site, the
+duplication is worth it. The only shared asset I will copy is `public/sn_logo.jpeg`, for
+the login screen and printed receipts.
 
 ---
 
-## 3. Data model (Google Sheets tabs)
+## 4. Deployment
 
-Row 1 of every tab is a frozen header. The app addresses columns by header name, so
-inserting a column later does not break it. All tabs get **protected ranges** so stray
+The fee app becomes a **second Vercel project** pointed at the same GitHub repo, with
+**Root Directory = `fee-app`**. Vercel then builds and deploys only that folder.
+
+- Recommended: set it up through the Vercel dashboard's Git integration, with an
+  "Ignored Build Step" so the fee app only rebuilds when `fee-app/**` changes. This adds
+  **zero files** to the repo and leaves the existing GitHub Actions workflow alone.
+- Alternative, if you prefer everything in CI: a new
+  `.github/workflows/deploy-fee-app.yml` mirroring the existing one but with
+  `working-directory: fee-app` and its own `VERCEL_PROJECT_ID_FEE_APP` secret. This is a
+  *new* file, so it still changes nothing existing — say the word and I will add it
+  instead.
+- Suggested hostname: `fees.snshikshaniketan.com` (or the free
+  `sns-fees.vercel.app`). The public site's domain and DNS records are untouched; this
+  adds one CNAME.
+- The fee app ships `X-Robots-Tag: noindex` headers and a `robots.txt` that disallows
+  everything, so staff pages never reach search results.
+
+---
+
+## 5. Data model (Google Sheets tabs)
+
+Row 1 of every tab is a frozen header. The app addresses columns **by header name**, so
+inserting a column later does not break it. All tabs get **protected ranges**, so stray
 manual edits require the sheet owner's confirmation — the app is the intended write path.
 
 ### `Users`
@@ -81,12 +144,12 @@ manual edits require the sheet owner's confirmation — the app is the intended 
 | `password_hash` | bcrypt, cost 12 — **never a plaintext password** |
 | `role` | `admin` \| `operator` |
 | `full_name` | |
-| `active` | `TRUE`/`FALSE` — deactivate instead of deleting |
-| `must_change_password` | `TRUE` after admin creates/resets |
-| `failed_attempts`, `locked_until` | lockout after 5 bad tries for 15 min |
+| `active` | `TRUE`/`FALSE` — deactivate, never delete |
+| `must_change_password` | `TRUE` after an admin creates or resets the account |
+| `failed_attempts`, `locked_until` | lock for 15 min after 5 bad tries |
 | `last_login_at`, `created_at`, `created_by` | |
 
-### `Students` — the roster (**required**, see §4)
+### `Students` — the roster (**required**, see §6)
 `student_id` (ULID) · `academic_year` · `class` · `section` · `student_name` ·
 `parent_name` · `contact` · `admission_date` · `active` · `concession_pct` · `notes`
 
@@ -98,7 +161,7 @@ manual edits require the sheet owner's confirmation — the app is the intended 
 `void_reason`
 
 > Paying for three months writes **three rows** sharing one `receipt_no`. This is the key
-> modelling choice: the class-wise matrix, the dues report and any pivot table become a
+> modelling choice: the class-wise matrix, the dues report, and any pivot table become a
 > direct filter instead of parsing a comma-separated month list out of a cell. The receipt
 > screen groups rows back together by `receipt_no`.
 
@@ -114,184 +177,188 @@ Nothing is ever hard-deleted. Corrections are a **void + re-entry**, both visibl
 
 ---
 
-## 4. The one gap in the requirements
+## 6. The one gap in the requirements
 
 > "Class-wise tuition fee view. Who has paid and not paid, month-wise."
 
 Payment records alone can only answer *who paid*. "Who has **not** paid" needs a list of
-who was expected to pay — i.e. a student roster per class per academic year. So the plan
-adds a `Students` tab and an admin roster screen (add/edit students, CSV import for the
-initial load). Without it, the headline feature cannot exist.
+who was expected to pay — a student roster per class per academic year. So the plan adds a
+`Students` tab and an admin roster screen (add/edit, plus CSV import for the initial
+load). Without it, the headline feature cannot exist.
 
-Related additions, all small, that make the thing usable in practice:
+Related additions, all small, that make it usable in practice:
 
-- **April–March academic year.** Months are ordered Apr → Mar, and `academic_year` is
-  stored as `2026-27`. Hard-coding Jan–Dec would misreport the year-end.
+- **April–March academic year.** Months run Apr → Mar and `academic_year` is stored as
+  `2026-27`. A Jan–Dec assumption would misreport every year-end.
 - **Duplicate guard.** Before writing, the server checks for an existing *active* payment
-  for the same (student, academic_year, month) and returns a conflict the UI surfaces as
+  for the same (student, academic_year, month) and returns a conflict the UI shows as
   "Arjun has already paid for June (receipt SNS-2627-0041) — continue anyway?".
-- **Receipt number + printable receipt.** Parents expect one. Printable A5 view with the
-  school logo, shareable as a PDF/screenshot on WhatsApp.
-- **Partial payments & concessions.** `amount` is free-text-editable (pre-filled from
-  `FeeStructure`), and `concession_pct` on a student adjusts the expected figure so a
-  scholarship student is not flagged as a defaulter.
-- **Defaulters report.** Students with any unpaid month up to the current month, with
+- **Receipt number + printable receipt.** Parents expect one: A5 print view with the
+  school logo, shareable as a PDF or screenshot on WhatsApp.
+- **Partial payments & concessions.** `amount` is pre-filled from `FeeStructure` but fully
+  editable, and `concession_pct` on a student adjusts the expected figure so a scholarship
+  student is not flagged as a defaulter.
+- **Defaulters report.** Every student with an unpaid month up to the current month, with
   parent contact — the thing the office actually needs printed.
-- **Hindi/English.** Reuses the existing `useTranslation` hook; the staff UI gets the same
-  toggle as the public site.
+- **Hindi + English** labels, matching the public site's bilingual approach.
 - **Backup.** A weekly Vercel cron (or Apps Script trigger) copies the spreadsheet to a
-  dated file in Drive. Sheets' own version history is good but not a backup against
-  accidental sharing or deletion.
-- **`noindex`** on all `/fees` routes plus `robots.txt` exclusion, so staff pages never
-  appear in search results.
+  dated file in Drive. Sheets version history is good, but it is not a backup against
+  accidental deletion or re-sharing.
 
 ---
 
-## 5. Credentials & secrets
+## 7. Credentials & secrets
 
 | Secret | Stored in | Notes |
 | --- | --- | --- |
-| `GOOGLE_SERVICE_ACCOUNT_EMAIL` | Vercel env var (Production + Preview) | |
+| `GOOGLE_SERVICE_ACCOUNT_EMAIL` | Vercel env var (fee-app project) | |
 | `GOOGLE_PRIVATE_KEY` | Vercel env var | newlines escaped as `\n` |
 | `FEES_SHEET_ID` | Vercel env var | |
-| `SESSION_SECRET` | Vercel env var | 32+ random bytes, used to sign session JWTs |
-| Staff passwords | `Users` tab, bcrypt hash only | plaintext exists only in the one-time handover from admin |
+| `SESSION_SECRET` | Vercel env var | 32+ random bytes, signs session JWTs |
+| Staff passwords | `Users` tab, bcrypt hash only | plaintext exists only in the admin's one-time handover |
 
-- Local development uses `.env.local`, which is already gitignored (`*.local`); the plan
-  also adds an explicit `.env*` rule and a committed `.env.example` with empty values.
+- Env vars live on the **fee-app Vercel project only**; the public site's project never
+  sees them.
+- Local development uses `fee-app/.env.local`, ignored by `fee-app/.gitignore`, with a
+  committed `.env.example` holding empty values.
 - The service account is created in a dedicated Google Cloud project with **only** the
   Sheets API enabled, and the spreadsheet is shared with that account's email as Editor.
-  It can touch exactly one spreadsheet and nothing else in the school's Drive.
-- The spreadsheet itself is never set to "anyone with the link"; sharing stays restricted
-  to the school Gmail account and the service account.
-- Key rotation: documented steps to issue a new service-account key and rotate
-  `SESSION_SECRET` (which logs everyone out — by design).
-- `SECURITY.md` for the fee app covers: who holds the Gmail password, how a departing
-  staff member's account is deactivated, and that admins hand over a temporary password
-  which the user must change at first login.
+  It can reach exactly one spreadsheet and nothing else in the school's Drive.
+- The spreadsheet is never set to "anyone with the link" — sharing stays restricted to the
+  school Gmail account and the service account.
+- Rotation steps for the service-account key and `SESSION_SECRET` (which logs everyone
+  out, by design) are documented in `fee-app/docs/SECURITY.md`, along with who holds the
+  Gmail password and how a departing staff member's account is deactivated.
 
 ### Session & request security
 
 - Session is a **JWT in an httpOnly, Secure, SameSite=Strict cookie**, 8-hour expiry,
-  carrying `user_id` and `role`. No token in `localStorage` (XSS-readable).
+  carrying `user_id` and `role`. No token in `localStorage`, which XSS can read.
 - **Every** API handler re-checks the role from the verified cookie. The UI hiding a
   button is cosmetic; the write handlers are what actually enforce "operators cannot
   update entries".
-- All request bodies validated with `zod` before they reach the Sheets layer.
-- Login throttling via `failed_attempts`/`locked_until` on the user row (serverless
-  functions have no shared memory, so the counter lives in the sheet).
-- Reads are cached in-process for 30–60 s to stay well inside Sheets' per-minute quota.
+- All request bodies validated with `zod` before reaching the Sheets layer.
+- Login throttling via `failed_attempts`/`locked_until` on the user row — serverless
+  functions share no memory, so the counter lives in the sheet.
+- Reads cached in-process for 30–60 s to stay inside Sheets' per-minute quota.
 
 ---
 
-## 6. Screens
+## 8. Screens
+
+Routes are at the app's own root (it has its own hostname), not under a `/fees` prefix.
 
 | Route | Who | What |
 | --- | --- | --- |
-| `/fees/login` | all | Username + password. No public sign-up link anywhere. |
-| `/fees` | all | Dashboard: collected this month, pending count, recent receipts, quick links. |
-| `/fees/collect` | all | The payment entry form (§7). |
-| `/fees/classwise` | all | **The main view.** Class + academic-year selector; grid of students (rows) × Apr–Mar (columns). Green = paid (amount + receipt link on hover), red = due, grey = not applicable. Totals per row and column, "X of Y students fully paid", export CSV (admin). |
-| `/fees/students/:id` | all | One student's full ledger. |
-| `/fees/receipt/:receiptNo` | all | Printable receipt. |
-| `/fees/defaulters` | all | Unpaid list with parent contacts, filterable by class. |
-| `/fees/roster` | admin | Student CRUD + CSV import. |
-| `/fees/structure` | admin | Per-class monthly fee. |
-| `/fees/users` | admin | Create user, set role, reset password, deactivate. |
-| `/fees/audit` | admin | Audit log, newest first. |
-| `/fees/payments/:receiptNo/edit` | admin | Correct or void a receipt, reason required. |
+| `/login` | all | Username + password. No sign-up link anywhere. |
+| `/` | all | Dashboard: collected this month, pending count, recent receipts, quick links. |
+| `/collect` | all | The payment entry form (§9). |
+| `/classwise` | all | **The main view.** Class + academic-year selector; grid of students (rows) × Apr–Mar (columns). Green = paid (amount and receipt link on hover), red = due, grey = not applicable. Row and column totals, "X of Y students fully paid", CSV export for admins. |
+| `/students/:id` | all | One student's full ledger. |
+| `/receipt/:receiptNo` | all | Printable receipt. |
+| `/defaulters` | all | Unpaid list with parent contacts, filterable by class. |
+| `/roster` | admin | Student CRUD + CSV import. |
+| `/structure` | admin | Per-class monthly fee. |
+| `/users` | admin | Create user, set role, reset password, deactivate. |
+| `/audit` | admin | Audit log, newest first. |
+| `/payments/:receiptNo/edit` | admin | Correct or void a receipt; reason required. |
 
-Operators see the admin routes neither in the nav nor on direct URL entry (route guard),
-and the API refuses them regardless.
+Operators see admin routes neither in the nav nor on direct URL entry (route guard), and
+the API refuses them regardless.
 
 ---
 
-## 7. The payment form
+## 9. The payment form
 
 Fields, in entry order:
 
 1. **Academic year** — defaults to the current Apr–Mar year.
 2. **Class** — dropdown from the roster (Nursery … VIII, per the existing site).
 3. **Student** — searchable dropdown filtered by class; auto-fills **parent name**
-   (editable). Free-text entry allowed with a warning when the student is not yet on the
-   roster, so a payment is never blocked by missing data.
+   (editable). Free-text entry is allowed with a warning when the student is not yet on
+   the roster, so a payment is never blocked by missing data.
 4. **Months paid** — Apr–Mar checkbox grid. Already-paid months are pre-marked and
    disabled; the next unpaid month is pre-selected. Multiple selection is the normal case.
 5. **Amount paid** — auto-computed as `months × monthly_fee − concession`, fully editable
-   for partial payments. Shows the split per month when the amount is overridden.
+   for partial payments; shows the per-month split when overridden.
 6. **Payment date** — defaults to today, cannot be in the future.
 7. **Payment mode** — cash / UPI / cheque / bank transfer.
 8. **Remarks** — free text.
-9. **Entered by** — taken from the session, not typed.
+9. **Entered by** — taken from the session, never typed.
 
-On submit: server validates → duplicate check → appends one row per month with a shared
-receipt number → writes an audit entry → returns the receipt number → UI shows the
-printable receipt with "Record another payment".
+On submit: validate → duplicate check → append one row per month sharing a receipt number
+→ write an audit entry → return the receipt number → show the printable receipt with
+"Record another payment".
 
-Receipt numbers are `SNS-2627-<ULID suffix>`: unique without a shared counter, because
-two staff submitting at the same moment on different serverless instances cannot safely
+Receipt numbers are `SNS-2627-<ULID suffix>`: unique without a shared counter, because two
+staff submitting at the same moment on different serverless instances cannot safely
 increment a cell. A human-friendly sequence column can be added later as a sheet formula.
 
 ---
 
-## 8. Build phases
+## 10. Build phases
 
 Each phase ends in a working, deployable state and a commit on
-`claude/tuition-fee-app-7ip94f`.
+`claude/tuition-fee-app-7ip94f`. Every file created lives under `fee-app/` or
+`docs/tuition-fee-app/`.
 
-**Phase 0 — Groundwork** *(no user-visible change)*
-- `vercel.json`: exclude `/api` from the SPA catch-all rewrite
-  (`"source": "/((?!api/).*)"`), add security headers for `/fees`.
-- Add deps: `googleapis`, `jose`, `bcryptjs`, `zod`.
-- `api/_lib/`: sheets client, header-mapped row read/write helpers, session
+**Phase 0 — Scaffold the app** *(nothing existing modified)*
+- `fee-app/` with its own `package.json`, Vite + React 19 + Tailwind v4 config (matching
+  the versions the public site already uses), `index.html`, `.gitignore`, `.env.example`,
+  `vercel.json` with API-safe rewrites and `noindex` headers, `robots.txt`.
+- `fee-app/api/_lib/`: Sheets client, header-mapped row read/write helpers, session
   sign/verify, `requireAuth`/`requireAdmin` guards, zod schemas, audit writer.
-- `docs/tuition-fee-app/SETUP.md`: step-by-step Google Cloud + service account +
-  spreadsheet creation, and a `scripts/bootstrap-sheet.mjs` that creates all five tabs
-  with headers, protections and the first admin user.
-- `.env.example`, `.gitignore` update.
+- `fee-app/scripts/bootstrap-sheet.mjs`: creates all five tabs with headers, protections,
+  and the first admin user.
+- `fee-app/README.md` + `docs/SETUP.md`: step-by-step Google Cloud, service account,
+  spreadsheet, and Vercel project setup.
 
-**Phase 1 — Auth** → `/fees/login` works, session cookie issued, `/fees` guarded, forced
-password change on first login, logout, lockout.
+**Phase 1 — Auth** → `/login` works, session cookie issued, routes guarded, forced
+password change at first login, logout, lockout.
 
-**Phase 2 — Entry form** → the full form of §7 writing to `Payments`, with duplicate
+**Phase 2 — Entry form** → the full form of §9 writing to `Payments`, with duplicate
 detection, receipt number, printable receipt, audit entry.
 
-**Phase 3 — Views** → class-wise month-wise matrix, student ledger, dashboard,
-defaulters report.
+**Phase 3 — Views** → class-wise month-wise matrix, student ledger, dashboard, defaulters
+report.
 
 **Phase 4 — Admin** → user management, roster + CSV import, fee structure, edit/void with
 reason, audit log viewer, CSV export.
 
 **Phase 5 — Hardening & handover** → rate limiting, loading/error/empty states, mobile
-layout (the office uses a phone), Hindi strings, `noindex`, backup cron, an
-`OPERATIONS.md` runbook, and a short staff guide in Hindi + English.
+layout (the office works from a phone), Hindi strings, backup cron, an `OPERATIONS.md`
+runbook, and a short staff guide in Hindi and English.
 
 ---
 
-## 9. Risks
+## 11. Risks
 
 | Risk | Mitigation |
 | --- | --- |
 | Sheets API quota (60 reads/min/user) on a busy morning | in-process caching, batched range reads, one write per receipt |
-| Two staff entering the same payment simultaneously | ULID receipt numbers, duplicate check, append-only writes |
+| Two staff entering the same payment at once | ULID receipt numbers, duplicate check, append-only writes |
 | Someone hand-edits the sheet and breaks a column | header-name addressing, protected ranges, documented "use the app" rule |
-| Vercel Hobby plan is non-commercial | confirm the school's plan; a Pro seat or the Apps Script fallback both resolve it |
+| Vercel Hobby plan is non-commercial, and this would be a second project on it | confirm the school's plan; a Pro seat or the Apps Script fallback both resolve it |
 | Student data in a spreadsheet | restricted sharing, no financial instrument data stored, bcrypt-only passwords, audit log |
-| Gmail account recovery | document 2FA + recovery contact for the owning account |
+| Gmail account recovery | document 2FA and a recovery contact for the owning account |
+| Two apps in one repo drift apart | they are independent by design; only `sn_logo.jpeg` is duplicated, and the fee app pins the same React/Vite/Tailwind majors |
 
 ---
 
-## 10. What I need from you
+## 12. What I need from you
 
-1. The **Gmail account** that should own the spreadsheet (the app never emails anyone; it
-   just needs to be the owner).
-2. Confirmation I should use **Vercel functions** (recommended) rather than the Apps
-   Script fallback.
-3. The **class list and monthly fee per class**, and whether sections (A/B) are used.
-4. The **first admin's** username and full name — I will generate a temporary password and
+1. The **Gmail account** that should own the spreadsheet (the app never sends email; it
+   just needs an owner).
+2. Confirmation to use **Vercel functions** (recommended) rather than the Apps Script
+   fallback — and whether you want the second Vercel project set up via the **dashboard**
+   (no new files) or a **new GitHub Actions workflow**.
+3. The **hostname** for the fee app (`fees.snshikshaniketan.com`, or just the free
+   `*.vercel.app` URL for now).
+4. The **class list and monthly fee per class**, and whether sections (A/B) are used.
+5. The **first admin's** username and full name — I will generate a temporary password and
    hand it over once, out of band.
-5. Whether a **student roster** exists anywhere (any spreadsheet or register) that can be
+6. Whether a **student roster** exists anywhere (any spreadsheet or register) that can be
    CSV-imported, or whether staff will add students as payments come in.
 
-I can start Phase 0 and Phase 1 before any of these are answered — the setup script and
-auth layer do not depend on them.
+I can start Phase 0 and Phase 1 before any of these are answered — the scaffold, the setup
+script, and the auth layer do not depend on them.
