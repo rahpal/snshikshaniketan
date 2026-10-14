@@ -122,3 +122,36 @@ test('dates are shown the way a receipt should read, without timezone drift', as
   assert.equal(formatDate(''), '');
   assert.equal(formatDate('not a date'), 'not a date');
 });
+
+test('a month is read as arrears, current or advance against the payment date', async () => {
+  const { monthKeyOf, monthStanding } = await import('../shared/academic-year.js');
+
+  // A parent paying in October: April is arrears, October is this month,
+  // January is an advance - all on one receipt.
+  assert.equal(monthStanding('2026-04', '2026-10-14'), 'overdue');
+  assert.equal(monthStanding('2026-09', '2026-10-14'), 'overdue');
+  assert.equal(monthStanding('2026-10', '2026-10-14'), 'current');
+  assert.equal(monthStanding('2026-11', '2026-10-14'), 'advance');
+  assert.equal(monthStanding('2027-01', '2026-10-14'), 'advance');
+
+  // The day within the month does not matter, only the month.
+  assert.equal(monthStanding('2026-10', '2026-10-01'), 'current');
+  assert.equal(monthStanding('2026-10', '2026-10-31'), 'current');
+
+  // Across the calendar year boundary, which an April-March year crosses.
+  assert.equal(monthStanding('2026-12', '2027-02-10'), 'overdue');
+  assert.equal(monthStanding('2027-03', '2027-02-10'), 'advance');
+
+  // Measured against the payment date, not today: a receipt written for an
+  // earlier date still reads the same way afterwards.
+  assert.equal(monthStanding('2026-06', '2026-05-20'), 'advance');
+
+  // A missing or malformed date falls back to the current month rather than
+  // throwing in the middle of someone's data entry.
+  assert.equal(monthStanding(monthKeyOf(), ''), 'current');
+  assert.equal(monthStanding(monthKeyOf(), undefined), 'current');
+  assert.equal(monthStanding('1999-01', 'not a date'), 'overdue');
+
+  assert.equal(monthKeyOf(new Date(2026, 9, 14)), '2026-10');
+  assert.equal(monthKeyOf(new Date(2027, 0, 3)), '2027-01');
+});

@@ -3,7 +3,7 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 import { Printer } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import { api } from '../lib/api.js';
-import { monthLabel } from '../../shared/academic-year.js';
+import { monthLabel, monthStanding } from '../../shared/academic-year.js';
 import { PAYMENT_MODE_LABELS, classLabel } from '../../shared/school.js';
 import { formatDate, formatInr } from '../../shared/money.js';
 import Alert from '../components/ui/Alert.jsx';
@@ -100,7 +100,16 @@ export default function Receipt() {
           <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
             {receipt.months.map((entry) => (
               <tr key={entry.month}>
-                <td className="py-2 text-slate-700 dark:text-slate-300">{monthLabel(entry.month)}</td>
+                <td className="py-2 text-slate-700 dark:text-slate-300">
+                  {monthLabel(entry.month)}
+                  {/* Worked out from the month and the payment date, so the
+                      parent's copy shows what they have paid ahead for. */}
+                  {monthStanding(entry.month, receipt.payment_date) === 'advance' && (
+                    <span className="ml-2 text-xs text-slate-500 dark:text-slate-400">
+                      ({t('receipt.advance')})
+                    </span>
+                  )}
+                </td>
                 <td className="py-2 text-right font-medium text-slate-900 dark:text-slate-100">
                   {formatInr(entry.amount)}
                 </td>

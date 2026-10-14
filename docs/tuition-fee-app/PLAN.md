@@ -219,7 +219,9 @@ Related additions, all small, that make it usable in practice:
   for the same (student, academic_year, month) and returns a conflict the UI shows as
   "Arjun has already paid for June (receipt SNS-2627-0041) — continue anyway?".
 - **Receipt number + printable receipt.** Parents expect one: A5 print view with the
-  school logo, shareable as a PDF or screenshot on WhatsApp.
+  school logo, shareable as a PDF or screenshot on WhatsApp. Months paid ahead for are
+  marked *(advance)*, worked out from the month and the payment date rather than stored,
+  so the parent's copy shows what they are covered for.
 - **Months that cost different amounts.** Each month on a receipt stores the amount
   entered against it, so an exam month, a part payment or a mid-year fee change is
   recorded as what it was rather than averaged away. `concession_pct` on a student adjusts
@@ -303,8 +305,15 @@ Fields, in entry order:
 3. **Student** — searchable dropdown filtered by class; auto-fills **parent name**
    (editable). Free-text entry is allowed with a warning when the student is not yet on
    the roster, so a payment is never blocked by missing data.
-4. **Months paid** — Apr–Mar checkbox grid. Already-paid months are pre-marked and
-   disabled; the next unpaid month is pre-selected. Multiple selection is the normal case.
+4. **Months paid** — Apr–Mar grid. Already-paid months are shown with their amount and
+   locked. Every other month is labelled by where it stands against the payment date —
+   *Due* (this month or earlier), *This month*, or *Advance* — because one deposit
+   routinely clears arrears and pays ahead at once, and April and December otherwise look
+   identical in October. A *"Select the N months still due"* action takes all the arrears
+   in one click. Choosing a month ahead while an earlier one is unpaid raises a prompt
+   listing them, with a button to add them to the same receipt; it never blocks, since
+   paying ahead is legitimate. A receipt covers one academic year, so dues from an earlier
+   year are recorded against that year.
 5. **Amount, per month** — one box, pre-filled with the amount this class most commonly
    pays, worked out from what has actually been collected, so there is no fee table to
    maintain. A link, *"Different amount for some months?"*, opens a box per month seeded

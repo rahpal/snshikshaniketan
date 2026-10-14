@@ -1,4 +1,4 @@
-import { monthLabel } from '../../shared/academic-year.js';
+import { monthLabel, monthStanding } from '../../shared/academic-year.js';
 import { formatInr, sumAmounts } from '../../shared/money.js';
 import { classLabel } from '../../shared/school.js';
 import { useLanguage } from '../context/LanguageContext.jsx';
@@ -19,6 +19,7 @@ import Field from './ui/Field.jsx';
 export default function AmountEntry({
   months,
   className,
+  paymentDate,
   perMonth,
   amount,
   amounts,
@@ -39,6 +40,14 @@ export default function AmountEntry({
 
   const differs = (value) => usual !== null && value > 0 && value !== usual;
   const anyDiffers = perMonth && values.some(differs);
+
+  // What this deposit is actually made of, so the person handing over the
+  // receipt can see at a glance that it clears two months and pays one ahead.
+  // "Due" means this month or earlier, matching the month grid and the quick
+  // action, so the two counts always add up to the months selected.
+  const standings = months.map((month) => monthStanding(month, paymentDate));
+  const advanceCount = standings.filter((standing) => standing === 'advance').length;
+  const dueCount = standings.length - advanceCount;
 
   return (
     <div className="space-y-3">
@@ -142,6 +151,8 @@ export default function AmountEntry({
         <span className="text-sm text-blue-800 dark:text-blue-300">
           {months.length} {months.length === 1 ? t('collect.monthWord') : t('collect.monthsWord')}
           {!perMonth && Number.parseFloat(amount) > 0 && ` × ${formatInr(Number.parseFloat(amount))}`}
+          {dueCount > 0 && advanceCount > 0 && ` · ${dueCount} ${t('collect.countOverdue')}`}
+          {advanceCount > 0 && ` · ${advanceCount} ${t('collect.countAdvance')}`}
         </span>
         <span className="text-2xl font-bold tracking-tight text-blue-900 dark:text-blue-200">
           {formatInr(total)}

@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { BanknoteArrowUp } from 'lucide-react';
 import { useLanguage } from '../context/LanguageContext.jsx';
 import { ApiError, api } from '../lib/api.js';
-import { academicYearOf, academicYearOptions, monthLabel } from '../../shared/academic-year.js';
+import { academicYearOf, academicYearOptions, monthLabel, monthStanding, monthsOf } from '../../shared/academic-year.js';
 import { CLASSES, PAYMENT_MODE_LABELS, classLabel } from '../../shared/school.js';
 import { formatInr, usualMonthlyAmount } from '../../shared/money.js';
 import Alert from '../components/ui/Alert.jsx';
@@ -98,6 +98,25 @@ export default function CollectPayment() {
     }
     return map;
   }, [payments, studentId, isNewStudent, selectedStudent]);
+
+  /**
+   * Months already gone by that this student has neither paid nor been
+   * selected for. Worth raising only when the receipt is paying ahead: taking
+   * an advance while an earlier month is still open is the combination that
+   * tends to be a mistake at the counter.
+   */
+  const unpaidArrears = useMemo(() => {
+    if (!studentId) return [];
+    return monthsOf(academicYear).filter(
+      (month) =>
+        !paidMonths[month] &&
+        !months.includes(month) &&
+        monthStanding(month, paymentDate) !== 'advance'
+    );
+  }, [academicYear, paidMonths, months, paymentDate, studentId]);
+
+  const payingAhead = months.some((month) => monthStanding(month, paymentDate) === 'advance');
+  const showArrears = payingAhead && unpaidArrears.length > 0;
 
   /** What this class usually pays, taken from what has actually been collected. */
   const usual = useMemo(() => usualMonthlyAmount(payments), [payments]);
@@ -318,6 +337,7 @@ export default function CollectPayment() {
             <div>
               <MonthPicker
                 academicYear={academicYear}
+                paymentDate={paymentDate}
                 selected={months}
                 paidMonths={paidMonths}
                 onChange={(next) => {
@@ -336,9 +356,32 @@ export default function CollectPayment() {
               )}
             </div>
 
+            {showArrears && (
+              <Alert tone="warning" title={t('collect.earlierUnpaid')}>
+                <p>{unpaidArrears.map((month) => monthLabel(month)).join(', ')}</p>
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="mt-2"
+                  onClick={() => {
+                    const next = [...new Set([...months, ...unpaidArrears])].sort();
+                    setMonths(next);
+                    if (perMonth) {
+                      setAmounts(
+                        Object.fromEntries(next.map((month) => [month, amounts[month] ?? shownAmount]))
+                      );
+                    }
+                  }}
+                >
+                  {t('collect.addThem')}
+                </Button>
+              </Alert>
+            )}
+
             <AmountEntry
               months={months}
               className={className}
+              paymentDate={paymentDate}
               perMonth={perMonth}
               amount={shownAmount}
               amounts={amounts}

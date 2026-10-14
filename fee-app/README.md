@@ -42,6 +42,14 @@ Classes are NUR, KG and 1 to 8, with no sections, as configured in
 the amount a class most commonly pays, worked out from what has actually been
 collected, so the figure follows the fee by itself with nothing to maintain.
 
+One deposit can clear **arrears** and pay **in advance** at the same time: every
+month in the grid shows whether it is due, is this month, or is ahead, there is
+a one-click "select the months still due", and the receipt marks the months paid
+ahead for. Taking an advance while an earlier month is still open raises a
+prompt - never a block - with a button to add those months to the same receipt.
+A receipt covers one academic year; dues from an earlier year are recorded
+against that year.
+
 Amounts are entered **per month**, not as a total to be divided. One box covers
 the usual case; a link opens a box per month when one of them differs - an exam
 month, a part payment, a fee that changed mid-year. The receipt total is always

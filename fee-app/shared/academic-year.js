@@ -57,3 +57,30 @@ export function academicYearOptions(date = new Date(), back = 3, forward = 1) {
   }
   return options;
 }
+
+/** The month a date falls in, as a month key: "2026-10". */
+export function monthKeyOf(date = new Date()) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
+/**
+ * Where a month sits relative to the day the fee was handed over:
+ * behind it, on it, or ahead of it.
+ *
+ * One deposit routinely covers both directions - arrears for months already
+ * gone and an advance for months still to come - and the person at the counter
+ * needs to see which is which before recording it.
+ *
+ * Measured against the payment date rather than today, so a receipt written
+ * last week still reads the same way now, and so the standing can be worked out
+ * again later from what is stored without keeping a column for it.
+ */
+export function monthStanding(monthKey, referenceIsoDate) {
+  const reference = /^\d{4}-\d{2}/.test(String(referenceIsoDate ?? ''))
+    ? String(referenceIsoDate).slice(0, 7)
+    : monthKeyOf();
+
+  if (monthKey < reference) return 'overdue';
+  if (monthKey === reference) return 'current';
+  return 'advance';
+}
