@@ -225,6 +225,9 @@ export function installFetch(spreadsheet, others = {}) {
       }
 
       if (!url.startsWith(API)) {
+        // Only Google is faked. Anything else - a test driving the local
+        // server over real HTTP, say - goes to the real fetch.
+        if (!url.includes('googleapis.com')) return original(input, init);
         throw new Error(`fake-sheets: unexpected request to ${url}`);
       }
 

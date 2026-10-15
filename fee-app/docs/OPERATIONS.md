@@ -42,6 +42,94 @@ it.
 
 ---
 
+## Running it on a computer at the school
+
+The app does not have to be deployed anywhere. `npm start` serves the built app
+and its API from one Node process, with no Vercel and no account.
+
+```bash
+cd fee-app
+npm install
+npm run build        # once, and again after any code change
+npm start            # http://localhost:3000
+```
+
+`npm run serve` does both in one go. `PORT=8080 npm start` changes the port.
+
+On startup it prints whether it can reach the spreadsheet and names it, so a
+mistyped key is obvious before anyone opens the browser:
+
+```
+   Serving on   http://localhost:3000
+   Endpoints    21
+   Spreadsheet  connected - "SNS Fee Register (live data)"
+```
+
+If it says `COULD NOT BE REACHED`, the line underneath is the actual reason.
+
+### Keeping it running
+
+The register is only available while that process is running and that computer
+is on. Choose one:
+
+- **Simplest** — leave the terminal window open. Closing it stops the app.
+- **Windows** — Task Scheduler, "run whether the user is logged on or not",
+  action `npm`, arguments `start`, starting in the `fee-app` folder.
+- **macOS or Linux** — a `launchd` or `systemd` entry, or `pm2 start server.mjs`
+  if you already use pm2.
+
+Nothing is lost when it stops: every payment is already in the spreadsheet. The
+app is a window onto that file, not a store of its own.
+
+### Using it from more than one computer
+
+By default it listens on this computer only. `HOST=0.0.0.0 npm start` opens it
+to the school network, reachable at `http://<that computer's IP>:3000`.
+
+**Sign-in will not work that way without HTTPS, and this is worth
+understanding rather than working around.** The session cookie is marked
+`Secure`, so browsers only accept it over HTTPS — with the one exception of
+`localhost`, which they treat as safe. Over plain `http://192.168.x.x` the
+browser silently refuses the cookie and sign-in appears to do nothing.
+
+That rule is doing its job: on plain HTTP over a shared network, anyone on the
+same wifi can read the session cookie as it goes past and sign in as that
+member of staff. So:
+
+- **One computer, the office machine** — use `localhost`. Nothing to change,
+  nothing to weaken. This is the recommended setup.
+- **Several devices** — put it behind HTTPS. A self-signed certificate with
+  [mkcert](https://github.com/FiloSottile/mkcert), or
+  [Caddy](https://caddyserver.com) in front of it, both do this in a few
+  minutes and keep the protection intact.
+- **Several devices, plain HTTP anyway** — possible, by dropping `Secure` from
+  the cookie in `api/_lib/session.js`. Ask before doing it: it trades away the
+  protection above, and on a school network with guest wifi that is a real
+  trade, not a formality.
+
+### Backups when there is no cloud scheduler
+
+The weekly job is triggered by Vercel's scheduler, which does not exist here.
+The backup itself works exactly the same; it just needs something to start it.
+
+- **By hand** — sign in as an administrator and open
+  `http://localhost:3000/api/cron/backup`. Worth doing on a Friday, and before
+  anything risky.
+- **On a schedule** — point Task Scheduler or `cron` at the same address once a
+  week, with `CRON_SECRET` set and sent as a bearer token:
+
+  ```bash
+  curl -H "Authorization: Bearer $CRON_SECRET" http://localhost:3000/api/cron/backup
+  ```
+
+Either way, `BACKUP_SHEET_ID` must be set in `.env.local` first — see below.
+
+> Also copy `.env.local` somewhere safe and offline. It is not in the
+> repository, on purpose, and without it the app cannot reach the spreadsheet.
+> Losing it means issuing a new service-account key, not losing data.
+
+---
+
 ## Backups
 
 The register lives in one Google spreadsheet. Two things protect it:

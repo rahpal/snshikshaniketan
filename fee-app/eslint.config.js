@@ -38,7 +38,7 @@ export default [
     rules: { 'react-refresh/only-export-components': 'off' },
   },
   {
-    files: ['api/**/*.js', 'scripts/**/*.mjs', 'test/**/*.mjs'],
+    files: ['api/**/*.js', 'scripts/**/*.mjs', 'test/**/*.mjs', 'server.mjs'],
     languageOptions: {
       ecmaVersion: 2022,
       globals: globals.node,

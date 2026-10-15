@@ -14,7 +14,7 @@ Status: **Built — all five phases** · Branch: `claude/tuition-fee-app-7ip94f`
 
 The app lives in [`fee-app/`](../../fee-app/). Setup instructions are in
 [`fee-app/docs/SETUP.md`](../../fee-app/docs/SETUP.md); credential handling is in
-[`fee-app/docs/SECURITY.md`](../../fee-app/docs/SECURITY.md). 135 tests run the
+[`fee-app/docs/SECURITY.md`](../../fee-app/docs/SECURITY.md). 142 tests run the
 real handlers against an in-memory fake of the Sheets API, so `npm test` needs
 no credentials.
 
@@ -136,8 +136,15 @@ the login screen and printed receipts.
 
 ## 4. Deployment
 
-The fee app becomes a **second Vercel project** pointed at the same GitHub repo, with
-**Root Directory = `fee-app`**. Vercel then builds and deploys only that folder.
+The app runs either as a **second Vercel project** pointed at the same GitHub repo with
+**Root Directory = `fee-app`**, or as **one Node process on a computer at the school**
+(`npm start`, via `server.mjs`, which serves `dist/` and mounts every file under `api/`
+at the route the cloud would serve it at). The handlers are the same in both; nothing is
+written twice. Local hosting needs no account and costs nothing, at the price of the
+computer having to be switched on, no HTTPS without extra setup, and the weekly backup
+needing something local to trigger it.
+
+The rest of this section describes the Vercel path.
 
 - Recommended: set it up through the Vercel dashboard's Git integration, with an
   "Ignored Build Step" so the fee app only rebuilds when `fee-app/**` changes. This adds

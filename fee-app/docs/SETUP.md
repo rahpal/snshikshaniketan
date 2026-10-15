@@ -115,7 +115,19 @@ The script is safe to re-run: it skips tabs, columns and admins that already
 exist. `npm run bootstrap-sheet -- --check` reports problems without changing
 anything.
 
-## 5. Deploy
+## 5. Choose where it runs
+
+Two options, and the app is identical in both:
+
+- **On a computer at the school.** No account, no deployment, no monthly cost.
+  `npm run serve` and it is live at `http://localhost:3000`. Skip to step 6 and
+  read
+  [OPERATIONS.md](OPERATIONS.md#running-it-on-a-computer-at-the-school) for
+  keeping it running and for backups.
+- **On Vercel**, below. Reachable from anywhere, backs itself up weekly on a
+  schedule, and nothing to keep switched on.
+
+### Deploying to Vercel
 
 The fee app is a **second Vercel project** on the same repository, with its root
 directory set to `fee-app`. The public website's project is not touched.

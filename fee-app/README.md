@@ -69,27 +69,39 @@ the usual case; a link opens a box per month when one of them differs - an exam
 month, a part payment, a fee that changed mid-year. The receipt total is always
 the sum of the months, and is never typed.
 
-## Running it locally
+## Running it
+
+The app runs the same way in two places: as a Vercel deployment, or as one Node
+process on a computer at the school. There is no cloud requirement.
 
 ```bash
 cd fee-app
 npm install
 cp .env.example .env.local      # then fill it in - see docs/SETUP.md
 npm run bootstrap-sheet -- --admin-username <you> --admin-name "Your Name"
-npm run dev                     # needs the Vercel CLI: npm i -g vercel
+npm run serve                   # builds, then serves on http://localhost:3000
 ```
 
-`npm run dev` runs `vercel dev`, which serves the React app and the `api/`
-functions together on one origin. `npm run dev:ui` runs Vite alone, which is
-quicker but has no API, so sign-in will not work.
+`npm start` serves an existing build; `npm run serve` rebuilds first. On
+startup it says whether it can reach the spreadsheet, and names it.
 
-The session cookie is always marked `Secure`. Chrome and Firefox treat
-`http://localhost` as a secure context and accept it, so local sign-in works in
-those; Safari does not, so use Chrome or Firefox locally.
+Running it at the school - keeping it up, reaching it from another device, and
+backups without a cloud scheduler - is covered in
+[`docs/OPERATIONS.md`](docs/OPERATIONS.md#running-it-on-a-computer-at-the-school).
+
+For development, `npm run dev` runs `vercel dev` (needs the Vercel CLI) and
+`npm run dev:ui` runs Vite alone, which is quicker but has no API, so sign-in
+will not work.
+
+The session cookie is always marked `Secure`. Browsers treat `http://localhost`
+as a secure context and accept it, so local sign-in works - but over plain HTTP
+to another machine's IP it will not. See the operations guide.
 
 | Command | What it does |
 | --- | --- |
-| `npm run dev` | app + API locally (Vercel CLI) |
+| `npm start` | serve the built app and its API, no Vercel needed |
+| `npm run serve` | build, then serve |
+| `npm run dev` | app + API with live reload (Vercel CLI) |
 | `npm run build` | production build into `dist/` |
 | `npm test` | the test suite, no network or spreadsheet needed |
 | `npm run lint` | ESLint over the app, API, scripts and tests |
