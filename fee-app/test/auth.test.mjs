@@ -439,3 +439,62 @@ test('same-origin checking allows a missing Origin header but rejects a mismatch
   assert.throws(() => assertSameOrigin({ headers: { host: 'fees.example.test', origin: 'https://evil.test' } }));
   assert.throws(() => assertSameOrigin({ headers: { host: 'fees.example.test', origin: 'not-a-url' } }));
 });
+
+test('a flood of failed sign-ins is refused without touching the spreadsheet', async () => {
+  await withSheet(async (sheet) => {
+    const { resetThrottle, THROTTLE_LIMITS } = await import('../api/_lib/throttle.js');
+    resetThrottle();
+    await seedUser();
+
+    // Enough wrong attempts to trip the per-address brake.
+    for (let attempt = 0; attempt < THROTTLE_LIMITS.MAX_FAILURES; attempt += 1) {
+      await signIn({ username: `nobody${attempt}`, password: 'WrongPassword1' });
+    }
+
+    const auditBefore = sheet.objects(TABS.AUDIT_LOG).length;
+    const blocked = await signIn({ username: 'nobody-else', password: 'WrongPassword1' });
+
+    assert.equal(blocked.status, 429);
+    assert.ok(blocked.json.details.retry_after_seconds > 0);
+    assert.equal(blocked.headers['retry-after'], String(blocked.json.details.retry_after_seconds));
+    // The whole point: a refused attempt costs no API quota.
+    assert.equal(sheet.objects(TABS.AUDIT_LOG).length, auditBefore, 'nothing should have been written');
+
+    resetThrottle();
+  });
+});
+
+test('the brake does not punish someone who then signs in correctly', async () => {
+  await withSheet(async () => {
+    const { resetThrottle } = await import('../api/_lib/throttle.js');
+    resetThrottle();
+    await seedUser();
+
+    // A few typos, then the right password - well short of the limit.
+    await signIn({ password: 'WrongPassword1' });
+    await signIn({ password: 'WrongPassword1' });
+    assert.equal((await signIn()).status, 200);
+
+    // Having succeeded, the address starts clean again.
+    const { retryAfterSeconds } = await import('../api/_lib/throttle.js');
+    assert.equal(retryAfterSeconds('203.0.113.7'), 0);
+    resetThrottle();
+  });
+});
+
+test('an oversized request body is refused', async () => {
+  await withSheet(async () => {
+    const { readBody } = await import('../api/_lib/http.js');
+
+    // A stream larger than the cap, as a request body would arrive.
+    async function* huge() {
+      for (let index = 0; index < 12; index += 1) yield Buffer.alloc(100_000, 'x');
+    }
+    const req = Object.assign(huge(), { headers: {} });
+
+    await assert.rejects(() => readBody(req), (error) => {
+      assert.equal(error.status, 413);
+      return true;
+    });
+  });
+});

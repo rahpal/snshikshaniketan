@@ -1,7 +1,7 @@
 # Tuition Fee Repository — Implementation Plan
 
 S.N.S. Shiksha Niketan · internal fee-collection app
-Status: **Phases 0-4 built** · Branch: `claude/tuition-fee-app-7ip94f`
+Status: **Built — all five phases** · Branch: `claude/tuition-fee-app-7ip94f`
 
 | Phase | State |
 | --- | --- |
@@ -10,11 +10,11 @@ Status: **Phases 0-4 built** · Branch: `claude/tuition-fee-app-7ip94f`
 | 2 — Payment entry form, receipt, student list with CSV import | **done** |
 | 3 — Class-wise view, student record, pending fees | **done** |
 | 4 — Admin: accounts, fee structure, void/correct, activity log | **done** |
-| 5 — Hardening and handover | not started |
+| 5 — Hardening and handover | **done** |
 
 The app lives in [`fee-app/`](../../fee-app/). Setup instructions are in
 [`fee-app/docs/SETUP.md`](../../fee-app/docs/SETUP.md); credential handling is in
-[`fee-app/docs/SECURITY.md`](../../fee-app/docs/SECURITY.md). 117 tests run the
+[`fee-app/docs/SECURITY.md`](../../fee-app/docs/SECURITY.md). 135 tests run the
 real handlers against an in-memory fake of the Sheets API, so `npm test` needs
 no credentials.
 
@@ -229,9 +229,10 @@ Related additions, all small, that make it usable in practice:
 - **Defaulters report.** Every student with an unpaid month up to the current month, with
   parent contact — the thing the office actually needs printed.
 - **Hindi + English** labels, matching the public site's bilingual approach.
-- **Backup.** A weekly Vercel cron (or Apps Script trigger) copies the spreadsheet to a
-  dated file in Drive. Sheets version history is good, but it is not a backup against
-  accidental deletion or re-sharing.
+- **Backup.** A weekly Vercel cron copies every tab into a second spreadsheet the school
+  also owns, overwriting it each run — that file's own version history supplies the older
+  copies, so there is no pile of dated files to manage. Sheets version history on the live
+  file is excellent for a deleted row but does nothing if the file itself is lost.
 
 ---
 
@@ -383,9 +384,13 @@ report.
 **Phase 4 — Admin** → user management, roster + CSV import, fee structure, edit/void with
 reason, audit log viewer, CSV export.
 
-**Phase 5 — Hardening & handover** → rate limiting, loading/error/empty states, mobile
-layout (the office works from a phone), Hindi strings, backup cron, an `OPERATIONS.md`
-runbook, and a short staff guide in Hindi and English.
+**Phase 5 — Hardening & handover** → a per-address brake on repeated failed sign-ins (a
+cost limiter in front of the account lockout, so a flood cannot exhaust the Sheets quota
+and take the register down), a cap on request bodies, a weekly backup into a second
+spreadsheet the school also owns, every screen checked at phone width, an
+[`OPERATIONS.md`](../../fee-app/docs/OPERATIONS.md) runbook, and a
+[staff guide](../../fee-app/docs/STAFF-GUIDE.md) in Hindi and English for the office to
+print.
 
 ---
 

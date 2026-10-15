@@ -13,6 +13,7 @@ import { setSessionCookie, signSession } from '../_lib/session.js';
 import { assertSameOrigin } from '../_lib/guards.js';
 import { audit } from '../_lib/audit.js';
 import { forbidden, tooMany, unauthorized } from '../_lib/errors.js';
+import { clearFailures, recordFailure, retryAfterSeconds } from '../_lib/throttle.js';
 
 /**
  * POST /api/auth/login
@@ -26,10 +27,22 @@ export default handler('POST', async (req, res) => {
 
   const { username, password } = parse(loginSchema, await readBody(req));
   const ip = clientIp(req);
+
+  // Checked before the spreadsheet is touched: the point is to make a flood of
+  // attempts free to refuse rather than costly to answer.
+  const waitSeconds = retryAfterSeconds(ip);
+  if (waitSeconds > 0) {
+    res.setHeader('Retry-After', String(waitSeconds));
+    throw tooMany('Too many sign-in attempts from this device. Please wait a few minutes.', {
+      retry_after_seconds: waitSeconds,
+    });
+  }
+
   const genericFailure = unauthorized('Incorrect username or password.', 'invalid_credentials');
 
   const user = await findUserByUsername(username, { fresh: true });
   if (!user) {
+    recordFailure(ip);
     await burnTime(password);
     await audit({ user: username, action: 'login.failed', entity_id: '', after: { reason: 'no_such_user' }, ip });
     throw genericFailure;
@@ -47,6 +60,7 @@ export default handler('POST', async (req, res) => {
   const passwordMatches = await verifyPassword(password, user.password_hash);
 
   if (!passwordMatches) {
+    recordFailure(ip);
     const updated = await recordFailedLogin(user);
     await audit({
       user: user.username,
@@ -68,6 +82,7 @@ export default handler('POST', async (req, res) => {
     );
   }
 
+  clearFailures(ip);
   const fresh = await recordSuccessfulLogin(user);
   const token = await signSession({
     user_id: fresh.user_id,

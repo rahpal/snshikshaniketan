@@ -82,11 +82,11 @@ export function resetAuthCache() {
   accessToken = null;
 }
 
-async function request(path, { method = 'GET', query, body } = {}) {
-  const { sheetId } = getEnv();
+async function request(path, { method = 'GET', query, body, spreadsheetId } = {}) {
   const token = await getAccessToken();
+  const target = spreadsheetId ?? getEnv().sheetId;
 
-  const url = new URL(`${SHEETS_API}/${sheetId}${path}`);
+  const url = new URL(`${SHEETS_API}/${target}${path}`);
   for (const [name, value] of Object.entries(query ?? {})) {
     if (value !== undefined && value !== null) url.searchParams.set(name, String(value));
   }
@@ -118,8 +118,9 @@ async function request(path, { method = 'GET', query, body } = {}) {
 }
 
 /** Reads a range. Pass a bare tab name to get every populated row in it. */
-export async function getValues(range) {
+export async function getValues(range, options = {}) {
   const data = await request(`/values/${encodeURIComponent(range)}`, {
+    ...options,
     query: { majorDimension: 'ROWS', valueRenderOption: 'UNFORMATTED_VALUE' },
   });
   return data.values ?? [];
@@ -139,12 +140,18 @@ export async function appendValues(range, values) {
 }
 
 /** Overwrites an exact range. */
-export async function updateValues(range, values) {
+export async function updateValues(range, values, options = {}) {
   return request(`/values/${encodeURIComponent(range)}`, {
+    ...options,
     method: 'PUT',
     query: { valueInputOption: 'RAW' },
     body: { range, majorDimension: 'ROWS', values },
   });
+}
+
+/** Empties a range, so a snapshot cannot leave rows of a longer previous one. */
+export async function clearValues(range, options = {}) {
+  return request(`/values/${encodeURIComponent(range)}:clear`, { ...options, method: 'POST', body: {} });
 }
 
 /**
@@ -162,10 +169,10 @@ export async function batchUpdateValues(data) {
 }
 
 /** Structural changes: adding tabs, freezing rows, protecting ranges. */
-export async function batchUpdate(requests) {
-  return request(':batchUpdate', { method: 'POST', body: { requests } });
+export async function batchUpdate(requests, options = {}) {
+  return request(':batchUpdate', { ...options, method: 'POST', body: { requests } });
 }
 
-export async function getSpreadsheet(fields = 'spreadsheetId,properties.title,sheets.properties') {
-  return request('', { query: { fields } });
+export async function getSpreadsheet(fields = 'spreadsheetId,properties.title,sheets.properties', options = {}) {
+  return request('', { ...options, query: { fields } });
 }

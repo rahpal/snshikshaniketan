@@ -120,10 +120,12 @@ export default function Pending() {
                   <tr>
                     <th scope="col" className="px-4 py-3 font-medium">{t('grid.student')}</th>
                     <th scope="col" className="px-4 py-3 font-medium">{t('collect.class')}</th>
-                    <th scope="col" className="px-4 py-3 font-medium">{t('collect.parent')}</th>
+                    <th scope="col" className="hidden px-4 py-3 font-medium md:table-cell">{t('collect.parent')}</th>
                     <th scope="col" className="px-4 py-3 font-medium">{t('pending.contact')}</th>
                     <th scope="col" className="px-4 py-3 font-medium">{t('pending.months')}</th>
-                    <th scope="col" className="px-4 py-3 text-right font-medium">{t('pending.paidSoFar')}</th>
+                    <th scope="col" className="hidden px-4 py-3 text-right font-medium sm:table-cell">
+                      {t('pending.paidSoFar')}
+                    </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
@@ -138,7 +140,9 @@ export default function Pending() {
                         </Link>
                       </td>
                       <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300">{classLabel(student.class)}</td>
-                      <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300">{student.parent_name || '—'}</td>
+                      <td className="hidden px-4 py-2.5 text-slate-600 md:table-cell dark:text-slate-300">
+                        {student.parent_name || '—'}
+                      </td>
                       <td className="px-4 py-2.5 tabular-nums text-slate-600 dark:text-slate-300">
                         {student.contact || '—'}
                       </td>
@@ -150,7 +154,7 @@ export default function Pending() {
                           {student.due_months.map((month) => monthLabel(month, { short: true }).split(' ')[0]).join(', ')}
                         </span>
                       </td>
-                      <td className="px-4 py-2.5 text-right tabular-nums text-slate-600 dark:text-slate-300">
+                      <td className="hidden px-4 py-2.5 text-right tabular-nums text-slate-600 sm:table-cell dark:text-slate-300">
                         {formatInr(student.paid_total)}
                       </td>
                     </tr>

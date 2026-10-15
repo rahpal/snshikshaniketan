@@ -10,6 +10,8 @@ it shares nothing with the website except the repository and the logo file.
 
 - Plan and roadmap: [`../docs/tuition-fee-app/PLAN.md`](../docs/tuition-fee-app/PLAN.md)
 - First-time setup: [`docs/SETUP.md`](docs/SETUP.md)
+- Running it, and what to do when something breaks: [`docs/OPERATIONS.md`](docs/OPERATIONS.md)
+- For the office, in Hindi and English: [`docs/STAFF-GUIDE.md`](docs/STAFF-GUIDE.md)
 - Credentials and account handling: [`docs/SECURITY.md`](docs/SECURITY.md)
 
 ## What works today
@@ -38,6 +40,8 @@ Phases 0, 1 and 2 of the plan:
 - **Corrections**: an administrator can cancel a receipt with a reason, or fix
   the details around a payment. The amounts and months are never editable
 - **Fee structure** (optional) and the **activity log**
+- **A weekly backup** into a second spreadsheet the school also owns, plus a
+  per-address brake on repeated failed sign-ins
 - The spreadsheet bootstrap script, which creates the five tabs and the first
   administrator
 - English and Hindi, light and dark, and a layout that works on a phone

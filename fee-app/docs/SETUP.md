@@ -185,6 +185,18 @@ or demote your own account, and you cannot remove the last administrator —
 either would lock everyone out of an app whose only other way in is running a
 script against the spreadsheet.
 
+## 8. Turn on the weekly backup
+
+Strongly recommended, and five minutes' work. Create a second spreadsheet in the
+same Google account, share it with the same service account as Editor, and put
+its id into Vercel as `BACKUP_SHEET_ID`. Full steps, and how to check it is
+working, are in [OPERATIONS.md](OPERATIONS.md#backups).
+
+## 9. Hand the staff guide over
+
+[STAFF-GUIDE.md](STAFF-GUIDE.md) is written for the office, in Hindi and
+English. Print it and keep it by the desk.
+
 ---
 
 ## If something does not work

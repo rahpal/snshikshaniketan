@@ -11,6 +11,7 @@ Who holds what, where it lives, and what to do when it needs to change.
 | `Payments`, `Students` tabs | student names, parent names, contact numbers, amounts | No bank, card or UPI identifiers are recorded — only how a payment was made. |
 | `AuditLog` tab | every sign-in, failure, and change, with the username and IP | Append-only in practice: the app never deletes from it. |
 | The browser | a signed session cookie, plus the chosen language and theme | The cookie is httpOnly, so no script on the page can read it. |
+| The backup spreadsheet (optional) | a weekly copy of every tab | Owned by the same Google account, shared with the same service account. Treat it exactly like the live file. |
 
 No password is ever written to the audit log, a server log, or the browser.
 
@@ -90,6 +91,13 @@ history) for writes you cannot account for.
   the spreadsheet because serverless functions share no memory. It is enough to
   stop password guessing at this scale; it is not a defence against a determined
   attacker with many IPs, which is not the threat here.
+- **A second brake refuses repeated failures from one address**, in memory and
+  therefore per serverless instance. Its job is not access control - the account
+  lockout above is that - but cost: each attempt otherwise costs a bcrypt
+  comparison and two spreadsheet writes, and a flood could exhaust the Sheets
+  API quota and take the register down for the office. Being per instance, an
+  attacker spread across instances gets a higher ceiling than the numbers
+  suggest. That is accepted, and nothing relies on it for correctness.
 - **A wrong username and a wrong password give the same answer, in the same
   time.** The sign-in endpoint cannot be used to find out who has an account.
 - **Operators are blocked on the server, not in the browser.** Every endpoint

@@ -61,8 +61,18 @@ export async function readBody(req) {
     }
   }
 
+  // Vercel caps request bodies too, but a handler reading a stream should
+  // never be the thing that decides how much memory to take.
+  const MAX_BODY_BYTES = 1_000_000;
   const chunks = [];
-  for await (const chunk of req) chunks.push(chunk);
+  let size = 0;
+  for await (const chunk of req) {
+    size += chunk.length;
+    if (size > MAX_BODY_BYTES) {
+      throw new HttpError(413, 'That request is too large.', 'body_too_large');
+    }
+    chunks.push(chunk);
+  }
   if (chunks.length === 0) return {};
   try {
     return JSON.parse(Buffer.concat(chunks).toString('utf8'));

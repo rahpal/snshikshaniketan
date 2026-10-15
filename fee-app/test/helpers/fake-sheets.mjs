@@ -14,6 +14,7 @@ import { generateKeyPairSync } from 'node:crypto';
 import { HEADERS } from '../../api/_lib/sheet-schema.js';
 
 const SHEET_ID = 'fake-sheet-id';
+export const BACKUP_SHEET_ID = 'fake-backup-sheet-id';
 
 function generateServiceAccountKey() {
   const { privateKey } = generateKeyPairSync('rsa', {
@@ -175,6 +176,13 @@ export class FakeSpreadsheet {
     return { spreadsheetId: SHEET_ID, updatedRows: values.length };
   }
 
+  clear(range) {
+    const parsed = parseRange(range);
+    if (!this.tabs.has(parsed.tab)) return {};
+    this.tabs.set(parsed.tab, parsed.whole ? [] : this.rows(parsed.tab));
+    return { clearedRange: range };
+  }
+
   batchUpdateValues(body) {
     for (const entry of body.data ?? []) this.update(entry.range, entry.values);
     return { spreadsheetId: SHEET_ID, totalUpdatedSheets: 1 };
@@ -193,9 +201,10 @@ export class FakeSpreadsheet {
  * Points global fetch at the fake. Returns a restore function; call it in a
  * test teardown so one test cannot leak its stub into the next.
  */
-export function installFetch(spreadsheet) {
+export function installFetch(spreadsheet, others = {}) {
   const original = globalThis.fetch;
-  const base = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}`;
+  const sheets = new Map([[SHEET_ID, spreadsheet], ...Object.entries(others)]);
+  const API = 'https://sheets.googleapis.com/v4/spreadsheets/';
 
   globalThis.fetch = async (input, init = {}) => {
     const url = typeof input === 'string' ? input : input.toString();
@@ -215,29 +224,34 @@ export function installFetch(spreadsheet) {
         return reply(200, { access_token: 'fake-access-token', expires_in: 3600, token_type: 'Bearer' });
       }
 
-      if (!url.startsWith(base)) {
+      if (!url.startsWith(API)) {
         throw new Error(`fake-sheets: unexpected request to ${url}`);
       }
 
-      const path = url.slice(base.length);
+      const rest = url.slice(API.length);
+      const id = rest.match(/^[^/:?]+/)?.[0];
+      const target = sheets.get(id);
+      if (!target) throw new Error(`fake-sheets: no spreadsheet ${id}`);
+      const path = rest.slice(id.length);
 
       if (method === 'GET' && (path === '' || path.startsWith('?'))) {
-        return reply(200, spreadsheet.meta());
+        return reply(200, target.meta());
       }
       if (method === 'POST' && path.startsWith(':batchUpdate')) {
-        return reply(200, spreadsheet.batchUpdate(body));
+        return reply(200, target.batchUpdate(body));
       }
 
       if (method === 'POST' && path.startsWith('/values:batchUpdate')) {
-        return reply(200, spreadsheet.batchUpdateValues(body));
+        return reply(200, target.batchUpdateValues(body));
       }
 
-      const valuesMatch = path.match(/^\/values\/([^?:]+)(:append)?/);
+      const valuesMatch = path.match(/^\/values\/([^?:]+)(:append|:clear)?/);
       if (valuesMatch) {
         const range = decodeURIComponent(valuesMatch[1]);
-        if (method === 'GET') return reply(200, spreadsheet.getValues(range));
-        if (method === 'POST') return reply(200, spreadsheet.append(range, body.values));
-        if (method === 'PUT') return reply(200, spreadsheet.update(range, body.values));
+        if (method === 'GET') return reply(200, target.getValues(range));
+        if (method === 'POST' && valuesMatch[2] === ':append') return reply(200, target.append(range, body.values));
+        if (method === 'POST' && valuesMatch[2] === ':clear') return reply(200, target.clear(range));
+        if (method === 'PUT') return reply(200, target.update(range, body.values));
       }
 
       throw new Error(`fake-sheets: unhandled ${method} ${path}`);

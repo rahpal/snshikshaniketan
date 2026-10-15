@@ -231,10 +231,10 @@ export default function Users() {
             <thead className="border-b border-slate-200 text-left text-xs uppercase tracking-wide text-slate-500 dark:border-slate-800 dark:text-slate-400">
               <tr>
                 <th scope="col" className="px-4 py-3 font-medium">{t('users.username')}</th>
-                <th scope="col" className="px-4 py-3 font-medium">{t('users.fullName')}</th>
+                <th scope="col" className="hidden px-4 py-3 font-medium sm:table-cell">{t('users.fullName')}</th>
                 <th scope="col" className="px-4 py-3 font-medium">{t('users.role')}</th>
                 <th scope="col" className="px-4 py-3 font-medium">{t('users.status')}</th>
-                <th scope="col" className="px-4 py-3 font-medium">{t('users.lastLogin')}</th>
+                <th scope="col" className="hidden px-4 py-3 font-medium lg:table-cell">{t('users.lastLogin')}</th>
                 <th scope="col" className="px-4 py-3 text-right font-medium">{t('audit.what')}</th>
               </tr>
             </thead>
@@ -250,8 +250,13 @@ export default function Users() {
                           ({t('users.you')})
                         </span>
                       )}
+                      <span className="block text-xs font-normal text-slate-500 sm:hidden dark:text-slate-400">
+                        {user.full_name}
+                      </span>
                     </td>
-                    <td className="px-4 py-2.5 text-slate-600 dark:text-slate-300">{user.full_name}</td>
+                    <td className="hidden px-4 py-2.5 text-slate-600 sm:table-cell dark:text-slate-300">
+                      {user.full_name}
+                    </td>
                     <td className="px-4 py-2.5">
                       <span
                         className={`inline-flex items-center gap-1 rounded px-2 py-0.5 text-xs font-medium ${
@@ -275,7 +280,7 @@ export default function Users() {
                         <span className="text-emerald-700 dark:text-emerald-400">{t('users.active')}</span>
                       )}
                     </td>
-                    <td className="px-4 py-2.5 text-xs text-slate-500 dark:text-slate-400">
+                    <td className="hidden px-4 py-2.5 text-xs text-slate-500 lg:table-cell dark:text-slate-400">
                       {user.last_login_at ? formatDate(user.last_login_at.slice(0, 10)) : t('users.never')}
                     </td>
                     <td className="px-4 py-2.5">
